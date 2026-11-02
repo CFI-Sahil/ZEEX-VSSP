@@ -1,6 +1,7 @@
 const app = require('./app');
 const env = require('./config/env');
 const { connectDB, disconnectDB } = require('./config/db');
+const { initKeepAlive, stopKeepAlive } = require('./utils/keepAlive');
 
 let server;
 
@@ -17,12 +18,16 @@ const startServer = async () => {
     console.log(`[HTTP] Server listening on http://localhost:${env.PORT}`);
     console.log(`[HTTP] Health check: http://localhost:${env.PORT}/api/v1/health`);
     console.log(`[CORS] Allowed Client Origin: ${env.CLIENT_ORIGIN}`);
+
+    // Initialize Render Keep-Alive service
+    initKeepAlive();
   });
 };
 
 // Graceful Shutdown Handlers
 const handleShutdown = async (signal) => {
   console.log(`\n[Server] Received ${signal}. Starting graceful shutdown...`);
+  stopKeepAlive();
 
   if (server) {
     server.close(async () => {

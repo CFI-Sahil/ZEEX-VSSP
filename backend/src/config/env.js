@@ -16,6 +16,9 @@ const envSchema = z.object({
   CLIENT_ORIGIN: z.string().url().default('http://localhost:5173'),
   STORAGE_DRIVER: z.enum(['local']).default('local'),
   UPLOAD_DIR: z.string().default('./uploads'),
+  KEEP_ALIVE_URL: z.string().url().optional().or(z.literal('')),
+  KEEP_ALIVE_INTERVAL_MINUTES: z.string().transform((val) => parseInt(val, 10)).default('14'),
+  RENDER_EXTERNAL_URL: z.string().optional(),
 });
 
 let parsedEnv;

@@ -231,3 +231,24 @@ node frontend/scripts/testMilestone4E2E.cjs         # Milestone 4: Alerts, Evide
 cd frontend
 npm run build
 ```
+
+---
+
+## 9. Render Deployment & 24/7 Keep-Alive Service
+
+To prevent Render's free tier from spinning down after 15 minutes of inactivity, the platform provides a **dual-layer keep-alive architecture**:
+
+### Layer 1: Automatic In-Process Self-Ping
+- The backend utility ([`backend/src/utils/keepAlive.js`](file:///d:/Sahil/ZEEX%20WEB/VSSP/backend/src/utils/keepAlive.js)) automatically detects `RENDER_EXTERNAL_URL` (injected by Render) or `KEEP_ALIVE_URL`.
+- Every 14 minutes, it issues a lightweight HTTP GET request to `/api/v1/health/ping`, resetting Render's 15-minute inactivity countdown.
+- Configuration variables in `backend/.env`:
+  ```env
+  KEEP_ALIVE_URL=https://your-backend-app.onrender.com
+  KEEP_ALIVE_INTERVAL_MINUTES=14
+  ```
+
+### Layer 2: External GitHub Actions Heartbeat
+- A GitHub Actions cron workflow ([`.github/workflows/keep-alive.yml`](file:///d:/Sahil/ZEEX%20WEB/VSSP/.github/workflows/keep-alive.yml)) runs every 14 minutes from GitHub's servers to ping the `/api/v1/health/ping` endpoint.
+- If the Render instance ever sleeps or restarts, the external GitHub Action wakes it up automatically.
+- Optional: Add `RENDER_BACKEND_URL` in your GitHub repository secrets (`Settings > Secrets and variables > Actions`).
+

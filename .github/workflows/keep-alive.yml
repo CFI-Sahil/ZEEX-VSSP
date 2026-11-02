@@ -1,0 +1,28 @@
+name: Render Free-Tier Keep-Alive
+
+on:
+  schedule:
+    # Run every 14 minutes (cron format: minute hour day month day-of-week)
+    - cron: '*/14 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions dashboard
+
+jobs:
+  ping-render:
+    name: Ping Render Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Public Health Endpoint
+        run: |
+          TARGET_URL="${{ secrets.RENDER_BACKEND_URL || 'https://zeex-vssp.onrender.com' }}"
+          echo "Sending keep-alive ping to: $TARGET_URL/api/v1/health/ping"
+          
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$TARGET_URL/api/v1/health/ping" || echo "000")
+          echo "Received HTTP status code: $HTTP_STATUS"
+          
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "Success: Render backend is awake and healthy!"
+          elif [ "$HTTP_STATUS" -eq 000 ]; then
+            echo "Warning: Request timed out or network error (service may be cold-starting)."
+          else
+            echo "Warning: Received unexpected HTTP status $HTTP_STATUS"
+          fi

@@ -6,6 +6,19 @@ const env = require('../config/env');
 const router = express.Router();
 
 /**
+ * @route   GET /api/v1/health/ping
+ * @desc    Ultra-lightweight keep-alive ping (for Render self-ping / uptime monitoring)
+ * @access  Public
+ */
+router.get('/ping', (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: 'pong',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+/**
  * @route   GET /api/v1/health
  * @desc    Comprehensive system and database health check
  * @access  Public
