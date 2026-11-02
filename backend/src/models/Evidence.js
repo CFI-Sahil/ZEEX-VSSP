@@ -60,6 +60,25 @@ const evidenceSchema = new mongoose.Schema(
       min: [1, 'File size must be greater than 0'],
       max: [5 * 1024 * 1024, 'File size cannot exceed 5 MB (5,242,880 bytes)'],
     },
+    storageDriver: {
+      type: String,
+      enum: {
+        values: ['local', 'cloudinary'],
+        message: 'Storage driver must be either local or cloudinary',
+      },
+      default: 'local',
+      index: true,
+    },
+    cloudinaryPublicId: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    cloudinaryUrl: {
+      type: String,
+      default: null,
+      select: false, // Defense-in-depth: Never expose raw Cloudinary URL in standard queries
+    },
     capturedAt: {
       type: Date,
       default: Date.now,
@@ -88,6 +107,15 @@ const evidenceSchema = new mongoose.Schema(
 );
 
 evidenceSchema.index({ cameraCode: 1, capturedAt: -1 });
+
+// Ensure Cloudinary URLs and internal metadata are never leaked to API consumers
+evidenceSchema.set('toJSON', {
+  transform: (doc, ret) => {
+    delete ret.cloudinaryUrl;
+    delete ret.__v;
+    return ret;
+  },
+});
 
 module.exports = mongoose.model('Evidence', evidenceSchema);
 

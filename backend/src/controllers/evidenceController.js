@@ -6,6 +6,7 @@ const { sendSuccess, sendError } = require('../utils/response');
 const { evidenceQuerySchema } = require('../validators/alertValidator');
 const { logAudit } = require('../utils/auditLogger');
 const { validateEvidenceFileOnDisk } = require('../utils/fileValidator');
+const storageService = require('../services/storageService');
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const EVIDENCE_BASE_DIR = path.resolve(__dirname, '../../uploads/evidence');
@@ -101,7 +102,8 @@ const getEvidenceFile = async (req, res, next) => {
       return sendError(res, 'Invalid evidence identifier format', null, 400);
     }
 
-    const evidence = await Evidence.findOne({ _id: id, isActive: true });
+    // Explicitly select +cloudinaryUrl for server-side proxying
+    const evidence = await Evidence.findOne({ _id: id, isActive: true }).select('+cloudinaryUrl');
     if (!evidence) {
       return sendError(res, 'Evidence record not found', null, 404);
     }
@@ -111,57 +113,43 @@ const getEvidenceFile = async (req, res, next) => {
       return sendError(res, 'Unsupported evidence file format. Allowed types: JPEG, PNG, WebP.', null, 415);
     }
 
-    // Prevent path traversal by resolving and checking strictly within EVIDENCE_BASE_DIR
-    const safeFileName = path.basename(evidence.fileName);
-    const resolvedPath = path.resolve(EVIDENCE_BASE_DIR, safeFileName);
-
-    if (!resolvedPath.startsWith(EVIDENCE_BASE_DIR)) {
-      return sendError(res, 'Access denied: Path traversal detected', null, 403);
+    // Retrieve file asset via unified storageService (handles Cloudinary and local disk)
+    let asset;
+    try {
+      asset = await storageService.getEvidenceAsset(evidence);
+    } catch (storageErr) {
+      return sendError(res, `Unable to retrieve evidence snapshot: ${storageErr.message}`, null, 404);
     }
 
-    if (!fs.existsSync(resolvedPath)) {
-      // Fallback: check if the exact filePath exists
-      const fallbackPath = path.resolve(EVIDENCE_BASE_DIR, path.basename(evidence.filePath));
-      if (!fs.existsSync(fallbackPath)) {
-        return sendError(res, 'Snapshot image file not found on server disk', null, 404);
-      }
-      return sendFileSecurely(res, fallbackPath, evidence, req);
+    // Security headers for file delivery
+    res.setHeader('Content-Type', evidence.fileType);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'");
+    res.setHeader('Cache-Control', 'private, max-age=86400'); // 24 hours client cache
+    res.setHeader('Content-Disposition', `inline; filename="${path.basename(evidence.fileName)}"`);
+
+    // Log audit event asynchronously
+    logAudit({
+      action: 'EVIDENCE_VIEWED',
+      entityType: 'EVIDENCE',
+      entityId: evidence._id,
+      req,
+      details: {
+        evidenceCode: evidence.evidenceCode,
+        alertCode: evidence.alertCode,
+        cameraCode: evidence.cameraCode,
+        storageDriver: asset.storageDriver,
+      },
+    });
+
+    if (asset.isBuffer) {
+      return res.status(200).send(asset.buffer);
     }
 
-    return sendFileSecurely(res, resolvedPath, evidence, req);
+    return res.sendFile(asset.filePath);
   } catch (error) {
     next(error);
   }
-};
-
-const sendFileSecurely = (res, filePath, evidence, req) => {
-  // Validate file signature and size (max 5 MB) prior to streaming
-  const validation = validateEvidenceFileOnDisk(filePath);
-  if (!validation.valid) {
-    return sendError(res, `Evidence integrity verification failed: ${validation.error}`, null, 415);
-  }
-
-  // Security headers for file delivery
-  res.setHeader('Content-Type', evidence.fileType);
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Content-Security-Policy', "default-src 'none'");
-  res.setHeader('Cache-Control', 'private, max-age=86400'); // 24 hours client cache
-  res.setHeader('Content-Disposition', `inline; filename="${path.basename(filePath)}"`);
-
-  // Log audit event asynchronously
-  logAudit({
-    action: 'EVIDENCE_VIEWED',
-    entityType: 'EVIDENCE',
-    entityId: evidence._id,
-    req,
-    details: {
-      evidenceCode: evidence.evidenceCode,
-      alertCode: evidence.alertCode,
-      cameraCode: evidence.cameraCode,
-    },
-  });
-
-  return res.sendFile(filePath);
 };
 
 module.exports = {

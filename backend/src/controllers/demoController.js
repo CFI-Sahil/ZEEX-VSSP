@@ -7,6 +7,7 @@ const { sendSuccess, sendError } = require('../utils/response');
 const { ingestDemoEventSchema } = require('../validators/alertValidator');
 const { logAudit } = require('../utils/auditLogger');
 const { validateEvidenceFileOnDisk } = require('../utils/fileValidator');
+const storageService = require('../services/storageService');
 
 const VIOLATION_NAMES = {
   NO_HELMET: 'Missing Safety Helmet',
@@ -78,7 +79,7 @@ const ingestDemoEvent = async (req, res, next) => {
 
     const violationName = customName || VIOLATION_NAMES[violationType] || 'Safety Violation';
 
-    // Requirement 3: File stored in private directory, max 5MB, valid image signature
+    // Requirement 3: File stored in private directory or Cloudinary, max 5MB, valid image signature
     const uploadsDir = path.resolve(__dirname, '../../uploads/evidence');
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
@@ -97,12 +98,18 @@ const ingestDemoEvent = async (req, res, next) => {
       fs.writeFileSync(filePath, Buffer.from(validPngBase64, 'base64'));
     }
 
-    // Validate file size and magic numbers
-    const fileValidation = validateEvidenceFileOnDisk(filePath);
-    if (!fileValidation.valid) {
+    // Delegate persistence to storageService (handles both local disk and Cloudinary)
+    let storedEvidence;
+    try {
+      storedEvidence = await storageService.saveEvidenceSnapshot({
+        localFilePath: filePath,
+        fileName: sampleFileName,
+        evidenceCode,
+      });
+    } catch (storageErr) {
       return sendError(
         res,
-        `Evidence snapshot validation failed: ${fileValidation.error}`,
+        `Evidence snapshot storage failed: ${storageErr.message}`,
         null,
         400
       );
@@ -131,10 +138,13 @@ const ingestDemoEvent = async (req, res, next) => {
       alertCode: alert.alertCode,
       camera: camera._id,
       cameraCode: camera.cameraCode,
-      fileName: sampleFileName,
-      filePath: `uploads/evidence/${sampleFileName}`,
-      fileType: fileValidation.fileType,
-      fileSize: fileValidation.fileSize,
+      fileName: storedEvidence.fileName,
+      filePath: storedEvidence.filePath,
+      fileType: storedEvidence.fileType,
+      fileSize: storedEvidence.fileSize,
+      storageDriver: storedEvidence.storageDriver,
+      cloudinaryPublicId: storedEvidence.cloudinaryPublicId,
+      cloudinaryUrl: storedEvidence.cloudinaryUrl,
       capturedAt: new Date(),
       uploadedBy: req?.user?._id || null,
       description: `Snapshot evidence for ${alertCode}`,
