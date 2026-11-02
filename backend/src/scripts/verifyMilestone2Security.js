@@ -212,8 +212,9 @@ const runSecurityAudit = async () => {
 
     assert(prodJwtHeader.includes('Secure'), 'Production vssp_jwt includes Secure flag (HTTPS strictly required)');
     assert(prodJwtHeader.includes('HttpOnly'), 'Production vssp_jwt includes HttpOnly flag');
-    assert(prodJwtHeader.includes('SameSite=Lax'), 'Production vssp_jwt includes SameSite=Lax');
+    assert(prodJwtHeader.toLowerCase().includes('samesite=none'), 'Production vssp_jwt includes SameSite=None');
     assert(prodCsrfHeader.includes('Secure'), 'Production vssp_csrf includes Secure flag');
+    assert(prodCsrfHeader.toLowerCase().includes('samesite=none'), 'Production vssp_csrf includes SameSite=None');
     assert(!prodCsrfHeader.includes('HttpOnly'), 'Production vssp_csrf is readable for Double-Submit header');
 
     env.NODE_ENV = originalEnv;

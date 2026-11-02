@@ -7,6 +7,9 @@
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
+// In-memory fallback for CSRF token in cross-origin environments where document.cookie is partitioned
+let inMemoryCsrf = null;
+
 /**
  * Extracts a cookie value by name from document.cookie
  */
@@ -40,13 +43,13 @@ async function request(endpoint, options = {}) {
     headers['Content-Type'] = 'application/json';
   }
 
-  // For state-changing requests, attach CSRF token from readable cookie if available
+  // For state-changing requests, attach CSRF token from readable cookie or in-memory fallback
   const isMutating = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(
     (options.method || 'GET').toUpperCase()
   );
 
   if (isMutating && !headers['X-CSRF-Token']) {
-    const csrfToken = getCookie('vssp_csrf');
+    const csrfToken = getCookie('vssp_csrf') || inMemoryCsrf;
     if (csrfToken) {
       headers['X-CSRF-Token'] = csrfToken;
     }
@@ -61,6 +64,12 @@ async function request(endpoint, options = {}) {
   try {
     const response = await fetch(url, config);
 
+    // Track CSRF token from response headers if returned
+    const headerCsrf = response.headers.get('x-csrf-token');
+    if (headerCsrf) {
+      inMemoryCsrf = headerCsrf;
+    }
+
     // 204 No Content
     if (response.status === 204) {
       return { success: true };
@@ -70,6 +79,10 @@ async function request(endpoint, options = {}) {
     const isJson = contentType && contentType.includes('application/json');
 
     const data = isJson ? await response.json() : await response.text();
+
+    if (data?.data?.csrfToken) {
+      inMemoryCsrf = data.data.csrfToken;
+    }
 
     if (!response.ok) {
       const errorMessage = data?.message || `Request failed with status ${response.status}`;

@@ -9,14 +9,19 @@ const COOKIE_MAX_AGE = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
 
 /**
  * Cookie option helper adhering to deployment environment
+ * In production (cross-site Vercel -> Render): strictly requires sameSite: 'none' and secure: true
+ * In development: uses sameSite: 'lax' to support local HTTP testing
  */
-const getCookieOptions = (httpOnly = true) => ({
-  httpOnly,
-  secure: env.NODE_ENV === 'production',
-  sameSite: 'lax',
-  path: '/',
-  maxAge: COOKIE_MAX_AGE,
-});
+const getCookieOptions = (httpOnly = true) => {
+  const isProduction = env.NODE_ENV === 'production';
+  return {
+    httpOnly,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    path: '/',
+    maxAge: COOKIE_MAX_AGE,
+  };
+};
 
 /**
  * @route   POST /api/v1/auth/login
@@ -75,6 +80,9 @@ const login = async (req, res, next) => {
     // 2. Set Readable CSRF cookie for client-side double-submit header
     res.cookie('vssp_csrf', csrfToken, getCookieOptions(false));
 
+    // Expose CSRF token in header for cross-origin clients
+    res.setHeader('X-CSRF-Token', csrfToken);
+
     return sendSuccess(res, 'Authentication successful', {
       user: {
         _id: user._id,
@@ -83,6 +91,7 @@ const login = async (req, res, next) => {
         role: user.role,
         lastLoginAt: user.lastLoginAt,
       },
+      csrfToken,
     });
   } catch (error) {
     next(error);
@@ -96,18 +105,19 @@ const login = async (req, res, next) => {
  */
 const logout = async (req, res) => {
   const isProduction = env.NODE_ENV === 'production';
+  const sameSite = isProduction ? 'none' : 'lax';
 
   res.clearCookie('vssp_jwt', {
     httpOnly: true,
     secure: isProduction,
-    sameSite: 'lax',
+    sameSite,
     path: '/',
   });
 
   res.clearCookie('vssp_csrf', {
     httpOnly: false,
     secure: isProduction,
-    sameSite: 'lax',
+    sameSite,
     path: '/',
   });
 
