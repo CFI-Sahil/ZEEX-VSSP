@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const env = require('../config/env');
-const { generateCsrfToken } = require('../middleware/csrf');
+const { generateCsrfToken, isValidCsrfSignature } = require('../middleware/csrf');
 const { sendSuccess, sendError } = require('../utils/response');
 const { loginSchema } = require('../validators/authValidator');
 
@@ -130,6 +130,15 @@ const logout = async (req, res) => {
  * @access  Authenticated
  */
 const getCurrentUser = async (req, res) => {
+  // Synchronize CSRF token for cross-origin clients across reloads
+  let csrfToken = req.cookies?.vssp_csrf;
+  if (!csrfToken || !isValidCsrfSignature(csrfToken, req.user._id.toString())) {
+    csrfToken = generateCsrfToken(req.user._id.toString());
+    res.cookie('vssp_csrf', csrfToken, getCookieOptions(false));
+  }
+
+  res.setHeader('X-CSRF-Token', csrfToken);
+
   return sendSuccess(res, 'Current session active', {
     user: {
       _id: req.user._id,
@@ -139,6 +148,7 @@ const getCurrentUser = async (req, res) => {
       isActive: req.user.isActive,
       lastLoginAt: req.user.lastLoginAt,
     },
+    csrfToken,
   });
 };
 

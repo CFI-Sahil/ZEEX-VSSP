@@ -7,8 +7,67 @@
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
-// In-memory fallback for CSRF token in cross-origin environments where document.cookie is partitioned
+const CSRF_STORAGE_KEY = 'vssp_csrf_token';
 let inMemoryCsrf = null;
+
+// Restore from sessionStorage on module load if available (survives tab page reloads)
+if (typeof window !== 'undefined' && window.sessionStorage) {
+  try {
+    inMemoryCsrf = window.sessionStorage.getItem(CSRF_STORAGE_KEY) || null;
+  } catch (e) {
+    // Storage unavailable (e.g. sandboxed iframe or private mode)
+  }
+}
+
+/**
+ * Persists CSRF token into memory and sessionStorage
+ */
+export function saveCsrfToken(token) {
+  if (!token || typeof token !== 'string') return;
+  inMemoryCsrf = token;
+  if (typeof window !== 'undefined' && window.sessionStorage) {
+    try {
+      window.sessionStorage.setItem(CSRF_STORAGE_KEY, token);
+    } catch (e) {}
+  }
+}
+
+/**
+ * Clears CSRF token on logout or session expiration
+ */
+export function clearCsrfToken() {
+  inMemoryCsrf = null;
+  if (typeof window !== 'undefined' && window.sessionStorage) {
+    try {
+      window.sessionStorage.removeItem(CSRF_STORAGE_KEY);
+    } catch (e) {}
+  }
+}
+
+/**
+ * Retrieves active CSRF token via multi-tier fallback:
+ * 1. document.cookie (same-domain dev)
+ * 2. in-memory variable (fast access)
+ * 3. sessionStorage (cross-origin production across reloads)
+ */
+export function getActiveCsrfToken() {
+  const cookieVal = getCookie('vssp_csrf');
+  if (cookieVal) return cookieVal;
+
+  if (inMemoryCsrf) return inMemoryCsrf;
+
+  if (typeof window !== 'undefined' && window.sessionStorage) {
+    try {
+      const stored = window.sessionStorage.getItem(CSRF_STORAGE_KEY);
+      if (stored) {
+        inMemoryCsrf = stored;
+        return stored;
+      }
+    } catch (e) {}
+  }
+
+  return null;
+}
 
 /**
  * Extracts a cookie value by name from document.cookie
@@ -43,13 +102,13 @@ async function request(endpoint, options = {}) {
     headers['Content-Type'] = 'application/json';
   }
 
-  // For state-changing requests, attach CSRF token from readable cookie or in-memory fallback
+  // For state-changing requests, attach CSRF token from active token sources
   const isMutating = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(
     (options.method || 'GET').toUpperCase()
   );
 
   if (isMutating && !headers['X-CSRF-Token']) {
-    const csrfToken = getCookie('vssp_csrf') || inMemoryCsrf;
+    const csrfToken = getActiveCsrfToken();
     if (csrfToken) {
       headers['X-CSRF-Token'] = csrfToken;
     }
@@ -64,10 +123,15 @@ async function request(endpoint, options = {}) {
   try {
     const response = await fetch(url, config);
 
-    // Track CSRF token from response headers if returned
+    // Track CSRF token from response headers if returned (CORS exposed)
     const headerCsrf = response.headers.get('x-csrf-token');
     if (headerCsrf) {
-      inMemoryCsrf = headerCsrf;
+      saveCsrfToken(headerCsrf);
+    }
+
+    // Handle logout cleanup
+    if (formattedEndpoint === '/auth/logout') {
+      clearCsrfToken();
     }
 
     // 204 No Content
@@ -80,8 +144,11 @@ async function request(endpoint, options = {}) {
 
     const data = isJson ? await response.json() : await response.text();
 
+    // Track CSRF token from JSON response body
     if (data?.data?.csrfToken) {
-      inMemoryCsrf = data.data.csrfToken;
+      saveCsrfToken(data.data.csrfToken);
+    } else if (data?.csrfToken) {
+      saveCsrfToken(data.csrfToken);
     }
 
     if (!response.ok) {
