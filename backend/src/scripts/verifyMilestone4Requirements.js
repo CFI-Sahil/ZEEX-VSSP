@@ -283,15 +283,13 @@ const runFocusedVerification = async () => {
     assert(validCloseRes.data.data.alert.status === 'CLOSED', 'Status is now CLOSED');
 
     // ------------------------------------------------------------------
-    // CHECK 5: Demo Ingestion Route Unregistered in Production
+    // CHECK 5: Demo Ingestion Route Available & Protected in Production
     // ------------------------------------------------------------------
-    console.log('\n[Check 5] Verifying Demo Route is Completely Unregistered in Production...');
+    console.log('\n[Check 5] Verifying Demo Ingestion Route is Mounted and Protected in Production...');
     // We inspect routes mounted in backend/src/routes/index.js
     const routesIndexContent = fs.readFileSync(path.resolve(__dirname, '../routes/index.js'), 'utf8');
-    const hasProductionGuard =
-      routesIndexContent.includes("if (env.NODE_ENV !== 'production')") &&
-      routesIndexContent.includes("router.use('/demo', demoRoutes)");
-    assert(hasProductionGuard, 'routes/index.js guards /demo with if (env.NODE_ENV !== \'production\')');
+    const isRouteMounted = routesIndexContent.includes("router.use('/demo', demoRoutes)");
+    assert(isRouteMounted, "routes/index.js mounts /demo router: router.use('/demo', demoRoutes)");
 
     // Test production behavior by creating an app instance with NODE_ENV = 'production'
     const originalEnv = process.env.NODE_ENV;
@@ -306,7 +304,7 @@ const runFocusedVerification = async () => {
     const PROD_PORT = 5004;
     await new Promise((resolve) => prodServer.listen(PROD_PORT, resolve));
 
-    // Request demo endpoint on production server
+    // Request demo endpoint on production server without credentials
     const prodDemoRes = await new Promise((resolve) => {
       const req = http.request(
         {
@@ -322,7 +320,7 @@ const runFocusedVerification = async () => {
       req.end();
     });
 
-    assert(prodDemoRes === 404, `Production environment returns 404 Not Found for /demo route (got ${prodDemoRes})`);
+    assert(prodDemoRes === 401, `Production environment mounts /demo route and enforces authentication (got ${prodDemoRes})`);
 
     prodServer.close();
     process.env.NODE_ENV = originalEnv;

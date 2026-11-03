@@ -20,8 +20,8 @@ const VIOLATION_NAMES = {
 
 /**
  * @route   POST /api/v1/demo/ingest-event
- * @desc    Simulate/ingest a safety detection event for demonstration (DEV ONLY)
- * @access  Protected (ADMIN, SAFETY_OPERATOR) - Development only
+ * @desc    Simulate/ingest a safety detection event for demonstration
+ * @access  Protected (ADMIN, SAFETY_OPERATOR)
  */
 const ingestDemoEvent = async (req, res, next) => {
   try {

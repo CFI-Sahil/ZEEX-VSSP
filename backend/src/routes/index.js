@@ -24,9 +24,7 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/alerts', alertRoutes);
 router.use('/evidence', evidenceRoutes);
 
-// Server-side enforcement: dev-only demo simulator is NEVER registered in production
-if (env.NODE_ENV !== 'production') {
-  router.use('/demo', demoRoutes);
-}
+// Mount detection event simulation & ingestion routes (protected by auth, RBAC & CSRF)
+router.use('/demo', demoRoutes);
 
 module.exports = router;

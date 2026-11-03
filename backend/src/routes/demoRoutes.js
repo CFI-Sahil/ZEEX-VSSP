@@ -6,8 +6,8 @@ const { csrfProtection } = require('../middleware/csrf');
 const router = express.Router();
 
 /**
- * Development-only detection event ingestion
- * Strictly unmounted in production at route registration level
+ * Detection event ingestion and demonstration simulator
+ * Protected by authentication (requireAuth), RBAC (ADMIN, SAFETY_OPERATOR), and CSRF validation
  */
 router.post(
   '/ingest-event',
