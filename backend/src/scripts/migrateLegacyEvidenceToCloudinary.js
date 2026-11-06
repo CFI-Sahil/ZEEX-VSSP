@@ -64,12 +64,15 @@ const runMigration = async () => {
       // Determine local file candidates
       const directPath = path.resolve(__dirname, '../../', doc.filePath || '');
       const uploadsPath = path.resolve(LOCAL_UPLOADS_DIR, path.basename(doc.fileName || doc.filePath || ''));
+      const bundledPath = path.resolve(__dirname, '../assets/evidence', path.basename(doc.fileName || doc.filePath || ''));
 
       let matchedLocalPath = null;
       if (fs.existsSync(directPath)) {
         matchedLocalPath = directPath;
       } else if (fs.existsSync(uploadsPath)) {
         matchedLocalPath = uploadsPath;
+      } else if (fs.existsSync(bundledPath)) {
+        matchedLocalPath = bundledPath;
       }
 
       let fileExists = Boolean(matchedLocalPath);

@@ -92,11 +92,16 @@ const ingestDemoEvent = async (req, res, next) => {
         : 'sample-zone-breach.png';
     const filePath = path.join(uploadsDir, sampleFileName);
 
-    // If file doesn't exist, create a valid 1x1 PNG image with proper magic numbers
+    // If file doesn't exist in uploads, copy from bundled fixtures or fallback to 1x1 image
     if (!fs.existsSync(filePath)) {
-      const validPngBase64 =
-        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-      fs.writeFileSync(filePath, Buffer.from(validPngBase64, 'base64'));
+      const bundledPath = path.join(storageService.BUNDLED_ASSETS_DIR || path.resolve(__dirname, '../assets/evidence'), sampleFileName);
+      if (fs.existsSync(bundledPath)) {
+        fs.copyFileSync(bundledPath, filePath);
+      } else {
+        const validPngBase64 =
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+        fs.writeFileSync(filePath, Buffer.from(validPngBase64, 'base64'));
+      }
     }
 
     // Delegate persistence to storageService (handles both local disk and Cloudinary)

@@ -5,6 +5,7 @@ const env = require('../config/env');
 const { validateFileSignature, validateEvidenceFileOnDisk } = require('../utils/fileValidator');
 
 const LOCAL_UPLOADS_DIR = path.resolve(__dirname, '../../uploads/evidence');
+const BUNDLED_ASSETS_DIR = path.resolve(__dirname, '../assets/evidence');
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 /**
@@ -15,6 +16,7 @@ const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
  * @param {Buffer} [options.buffer] - Image buffer
  * @param {string} options.fileName - Target file name
  * @param {string} options.evidenceCode - Unique evidence code (e.g., EVD-1234)
+ * @param {string} [options.driver] - Explicit driver override ('local' | 'cloudinary')
  * @returns {Promise<Object>} Storage metadata to populate Evidence document
  */
 const saveEvidenceSnapshot = async ({
@@ -25,6 +27,15 @@ const saveEvidenceSnapshot = async ({
   driver,
 }) => {
   let fileValidation;
+  let resolvedSourcePath = localFilePath;
+
+  // If localFilePath is provided but doesn't exist at the given path, check bundled assets
+  if (localFilePath && !fs.existsSync(localFilePath)) {
+    const fixturePath = path.resolve(BUNDLED_ASSETS_DIR, path.basename(localFilePath));
+    if (fs.existsSync(fixturePath)) {
+      resolvedSourcePath = fixturePath;
+    }
+  }
 
   if (buffer && Buffer.isBuffer(buffer)) {
     if (buffer.length > 5 * 1024 * 1024) {
@@ -35,11 +46,11 @@ const saveEvidenceSnapshot = async ({
       throw new Error(`Evidence snapshot validation failed: ${fileValidation.error}`);
     }
     fileValidation.fileSize = buffer.length;
-  } else if (localFilePath) {
-    if (!fs.existsSync(localFilePath)) {
+  } else if (resolvedSourcePath) {
+    if (!fs.existsSync(resolvedSourcePath)) {
       throw new Error('Snapshot source file not found on disk');
     }
-    fileValidation = validateEvidenceFileOnDisk(localFilePath);
+    fileValidation = validateEvidenceFileOnDisk(resolvedSourcePath);
     if (!fileValidation.valid) {
       throw new Error(`Evidence snapshot validation failed: ${fileValidation.error}`);
     }
@@ -53,7 +64,21 @@ const saveEvidenceSnapshot = async ({
     );
   }
 
-  const effectiveDriver = driver || process.env.STORAGE_DRIVER || env.STORAGE_DRIVER;
+  const hasCloudinaryCredentials = Boolean(
+    env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET
+  );
+
+  const effectiveDriver = (() => {
+    if (driver) return driver;
+    if (process.env.STORAGE_DRIVER) return process.env.STORAGE_DRIVER;
+    if (env.STORAGE_DRIVER === 'cloudinary') return 'cloudinary';
+    // In production with valid Cloudinary credentials, automatically use Cloudinary to avoid ephemeral container loss
+    if (env.NODE_ENV === 'production' && hasCloudinaryCredentials) {
+      return 'cloudinary';
+    }
+    return env.STORAGE_DRIVER || 'local';
+  })();
+
   const targetFileName =
     fileName || `${evidenceCode || 'snapshot'}.${fileValidation.fileType.split('/')[1]}`;
 
@@ -61,8 +86,8 @@ const saveEvidenceSnapshot = async ({
   if (effectiveDriver === 'cloudinary') {
     let uploadResult;
 
-    if (localFilePath && fs.existsSync(localFilePath)) {
-      uploadResult = await cloudinary.uploader.upload(localFilePath, {
+    if (resolvedSourcePath && fs.existsSync(resolvedSourcePath)) {
+      uploadResult = await cloudinary.uploader.upload(resolvedSourcePath, {
         folder: env.CLOUDINARY_FOLDER || 'ZEEX VSSP/Evidence',
         public_id: evidenceCode,
         resource_type: 'image',
@@ -104,8 +129,10 @@ const saveEvidenceSnapshot = async ({
 
   const destPath = path.join(LOCAL_UPLOADS_DIR, targetFileName);
 
-  if (buffer && (!fs.existsSync(destPath) || localFilePath !== destPath)) {
+  if (buffer && (!fs.existsSync(destPath) || resolvedSourcePath !== destPath)) {
     fs.writeFileSync(destPath, buffer);
+  } else if (resolvedSourcePath && resolvedSourcePath !== destPath && !fs.existsSync(destPath)) {
+    fs.copyFileSync(resolvedSourcePath, destPath);
   }
 
   return {
@@ -121,9 +148,14 @@ const saveEvidenceSnapshot = async ({
 
 /**
  * Retrieves an evidence snapshot file stream or buffer securely
+ * Implements a resilient 4-tier asset retrieval strategy:
+ *   Tier 1: Cloudinary URL proxy (for cloud-stored assets)
+ *   Tier 2: Primary local uploads directory (uploads/evidence/)
+ *   Tier 3: Bundled fixtures directory fallback (src/assets/evidence/ - deployed with code)
+ *   Tier 4: Dynamic Cloudinary fallback check (if cloud credentials exist)
  *
  * @param {Object} evidence - Mongoose Evidence document
- * @returns {Promise<Object>} { buffer | filePath, fileType, fileSize, isBuffer }
+ * @returns {Promise<Object>} { buffer | filePath, fileType, fileSize, isBuffer, storageDriver }
  */
 const getEvidenceAsset = async (evidence) => {
   const isCloudinary =
@@ -131,7 +163,7 @@ const getEvidenceAsset = async (evidence) => {
     (evidence.cloudinaryUrl && evidence.cloudinaryUrl.startsWith('http')) ||
     (evidence.filePath && evidence.filePath.startsWith('http'));
 
-  // A. Cloudinary asset retrieval (Server-to-Server proxy)
+  // Tier 1: Cloudinary asset retrieval (Server-to-Server proxy)
   if (isCloudinary) {
     const targetUrl = evidence.cloudinaryUrl || evidence.filePath;
     const response = await fetch(targetUrl, { signal: AbortSignal.timeout(15000) });
@@ -158,40 +190,95 @@ const getEvidenceAsset = async (evidence) => {
     };
   }
 
-  // B. Local disk asset retrieval
-  const safeFileName = path.basename(evidence.fileName);
-  let resolvedPath = path.resolve(LOCAL_UPLOADS_DIR, safeFileName);
+  // Tier 2 & 3: Local disk asset retrieval with multi-tier fallback
+  const safeFileName = path.basename(evidence.fileName || '');
+  const safeDbPath = path.basename(evidence.filePath || '');
 
-  if (!resolvedPath.startsWith(LOCAL_UPLOADS_DIR)) {
-    throw new Error('Access denied: Path traversal attempt detected');
-  }
+  let candidatePath = null;
 
-  if (!fs.existsSync(resolvedPath)) {
-    // Fallback: check basename of filePath
-    const fallbackPath = path.resolve(LOCAL_UPLOADS_DIR, path.basename(evidence.filePath));
-    if (!fs.existsSync(fallbackPath)) {
-      throw new Error('Snapshot image file not found on local disk');
+  // Tier 2 Check: Primary LOCAL_UPLOADS_DIR
+  if (safeFileName) {
+    const p = path.resolve(LOCAL_UPLOADS_DIR, safeFileName);
+    if (p.startsWith(LOCAL_UPLOADS_DIR) && fs.existsSync(p)) {
+      candidatePath = p;
     }
-    resolvedPath = fallbackPath;
+  }
+  if (!candidatePath && safeDbPath) {
+    const p = path.resolve(LOCAL_UPLOADS_DIR, safeDbPath);
+    if (p.startsWith(LOCAL_UPLOADS_DIR) && fs.existsSync(p)) {
+      candidatePath = p;
+    }
   }
 
-  const validation = validateEvidenceFileOnDisk(resolvedPath);
-  if (!validation.valid) {
-    throw new Error(`Evidence integrity check failed: ${validation.error}`);
+  // Tier 3 Check: BUNDLED_ASSETS_DIR (static fixtures deployed with application code)
+  if (!candidatePath && fs.existsSync(BUNDLED_ASSETS_DIR)) {
+    if (safeFileName) {
+      const p = path.resolve(BUNDLED_ASSETS_DIR, safeFileName);
+      if (p.startsWith(BUNDLED_ASSETS_DIR) && fs.existsSync(p)) {
+        candidatePath = p;
+      }
+    }
+    if (!candidatePath && safeDbPath) {
+      const p = path.resolve(BUNDLED_ASSETS_DIR, safeDbPath);
+      if (p.startsWith(BUNDLED_ASSETS_DIR) && fs.existsSync(p)) {
+        candidatePath = p;
+      }
+    }
   }
 
-  return {
-    filePath: resolvedPath,
-    fileType: evidence.fileType,
-    fileSize: validation.fileSize,
-    isBuffer: false,
-    storageDriver: 'local',
-  };
+  // If a valid local disk file was located in Tier 2 or 3
+  if (candidatePath) {
+    const validation = validateEvidenceFileOnDisk(candidatePath);
+    if (!validation.valid) {
+      throw new Error(`Evidence integrity check failed: ${validation.error}`);
+    }
+
+    return {
+      filePath: candidatePath,
+      fileType: evidence.fileType,
+      fileSize: validation.fileSize,
+      isBuffer: false,
+      storageDriver: 'local',
+    };
+  }
+
+  // Tier 4 Check: Check Cloudinary if credentials exist (e.g., if asset was migrated to cloud)
+  const hasCloudinary = Boolean(
+    env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET
+  );
+
+  if (hasCloudinary && evidence.evidenceCode) {
+    try {
+      const publicId = `${env.CLOUDINARY_FOLDER || 'ZEEX VSSP/Evidence'}/${evidence.evidenceCode}`;
+      const cloudAsset = await cloudinary.api.resource(publicId);
+      if (cloudAsset && cloudAsset.secure_url) {
+        const response = await fetch(cloudAsset.secure_url, { signal: AbortSignal.timeout(15000) });
+        if (response.ok) {
+          const arrayBuffer = await response.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          const validation = validateFileSignature(buffer);
+          if (validation.valid) {
+            return {
+              buffer,
+              fileType: evidence.fileType,
+              fileSize: buffer.length,
+              isBuffer: true,
+              storageDriver: 'cloudinary',
+            };
+          }
+        }
+      }
+    } catch (_) {
+      // Asset not found in Cloudinary; fall through to descriptive error
+    }
+  }
+
+  throw new Error('Snapshot image file not found on local disk or cloud storage');
 };
 
 module.exports = {
   saveEvidenceSnapshot,
   getEvidenceAsset,
   LOCAL_UPLOADS_DIR,
+  BUNDLED_ASSETS_DIR,
 };
-

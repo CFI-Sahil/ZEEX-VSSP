@@ -15,7 +15,21 @@ const envSchema = z
     COOKIE_SECRET: z.string().min(16, { message: 'COOKIE_SECRET must be at least 16 characters' }).default('dev_cookie_secret_must_be_changed_12345'),
     CSRF_SECRET: z.string().min(16, { message: 'CSRF_SECRET must be at least 16 characters' }).default('dev_csrf_secret_must_be_changed_12345'),
     CLIENT_ORIGIN: z.string().url().default('http://localhost:5173'),
-    STORAGE_DRIVER: z.enum(['local', 'cloudinary']).default('local'),
+    STORAGE_DRIVER: z
+      .enum(['local', 'cloudinary'])
+      .optional()
+      .transform((val) => {
+        if (val) return val;
+        if (
+          process.env.NODE_ENV === 'production' &&
+          process.env.CLOUDINARY_CLOUD_NAME &&
+          process.env.CLOUDINARY_API_KEY &&
+          process.env.CLOUDINARY_API_SECRET
+        ) {
+          return 'cloudinary';
+        }
+        return 'local';
+      }),
     UPLOAD_DIR: z.string().default('./uploads'),
     CLOUDINARY_CLOUD_NAME: z.string().optional(),
     CLOUDINARY_API_KEY: z.string().optional(),
