@@ -54,7 +54,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F8FC] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F5F8FC] flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Brand Header with Transparent Logo */}
         <div className="flex flex-col items-center justify-center text-center">

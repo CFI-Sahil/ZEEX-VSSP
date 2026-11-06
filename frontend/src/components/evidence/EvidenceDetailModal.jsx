@@ -58,7 +58,7 @@ export function EvidenceDetailModal({ isOpen, onClose, evidence = null }) {
         </div>
 
         {/* Metadata Details Grid */}
-        <div className="grid grid-cols-2 gap-3 text-xs">
+        <div className="grid grid-cols-1 xs:grid-cols-2 gap-2.5 sm:gap-3 text-xs">
           <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
             <div className="flex items-center gap-1.5 text-slate-500 font-medium mb-1">
               <AlertTriangle className="w-3.5 h-3.5" />
@@ -67,7 +67,7 @@ export function EvidenceDetailModal({ isOpen, onClose, evidence = null }) {
             <p className="font-semibold text-slate-900 font-mono">
               {evidence.alertCode || evidence.alert?.alertCode || 'N/A'}
             </p>
-            <p className="text-slate-500">{evidence.alert?.violationName || 'Safety Incident'}</p>
+            <p className="text-slate-500 truncate">{evidence.alert?.violationName || 'Safety Incident'}</p>
           </div>
 
           <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
@@ -76,7 +76,7 @@ export function EvidenceDetailModal({ isOpen, onClose, evidence = null }) {
               <span>Camera Point</span>
             </div>
             <p className="font-semibold text-slate-900">{evidence.cameraCode}</p>
-            <p className="text-slate-500">{evidence.camera?.site || 'Plant 1'}</p>
+            <p className="text-slate-500 truncate">{evidence.camera?.site || 'Plant 1'}</p>
           </div>
 
           <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
@@ -84,7 +84,7 @@ export function EvidenceDetailModal({ isOpen, onClose, evidence = null }) {
               <HardDrive className="w-3.5 h-3.5" />
               <span>File Details</span>
             </div>
-            <p className="font-semibold text-slate-900">{evidence.fileName}</p>
+            <p className="font-semibold text-slate-900 truncate">{evidence.fileName}</p>
             <p className="text-slate-500">
               {evidence.fileType} · {(evidence.fileSize / 1024).toFixed(1)} KB
             </p>
@@ -95,7 +95,7 @@ export function EvidenceDetailModal({ isOpen, onClose, evidence = null }) {
               <Clock className="w-3.5 h-3.5" />
               <span>Captured At</span>
             </div>
-            <p className="font-semibold text-slate-900">
+            <p className="font-semibold text-slate-900 truncate">
               {evidence.capturedAt ? new Date(evidence.capturedAt).toLocaleString() : 'N/A'}
             </p>
           </div>

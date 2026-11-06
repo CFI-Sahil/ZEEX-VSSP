@@ -16,3 +16,16 @@
   --color-status-info: #0EA5E9;
 }
 
+/* Subtle typography & density scaling for laptop and desktop displays */
+@media (min-width: 1024px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1536px) {
+  html {
+    font-size: 15px;
+  }
+}
+

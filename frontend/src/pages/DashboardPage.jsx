@@ -170,7 +170,7 @@ export function DashboardPage() {
             </h2>
             <span className="text-[11px] text-slate-400 font-medium">4 Fleet Indicators</span>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
             <StatCard
               title="Total Cameras"
               value={isLoading ? '...' : String(data.kpis.totalCameras)}
@@ -219,7 +219,7 @@ export function DashboardPage() {
             </h2>
             <span className="text-[11px] text-slate-400 font-medium">3 Lifecycle Indicators</span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3.5">
             <StatCard
               title="Total Violations"
               value={isLoading ? '...' : String(data.kpis.totalViolations)}
@@ -290,34 +290,34 @@ export function DashboardPage() {
               {data.recentCameras.map((cam) => (
                 <div
                   key={cam._id}
-                  className="rounded-lg border border-[var(--color-border)] overflow-hidden bg-slate-900 text-white flex flex-col"
+                  className="rounded-lg border border-[var(--color-border)] overflow-hidden bg-slate-900 text-white flex flex-col shadow-2xs"
                   data-testid={`camera-tile-${cam.cameraCode}`}
                 >
-                  <div className="h-44 bg-slate-950 flex flex-col items-center justify-center p-4 relative text-center">
-                    <Video className="w-8 h-8 text-slate-600 mb-2" />
-                    <p className="text-xs font-medium text-slate-300">{cam.name}</p>
-                    <p className="text-[11px] text-slate-400 mt-1">
-                      Stream: <span className="text-slate-300">{cam.streamStatus || 'UNAVAILABLE'}</span>
+                  <div className="h-36 sm:h-44 bg-slate-950 flex flex-col items-center justify-center p-3 sm:p-4 relative text-center">
+                    <Video className="w-7 h-7 sm:w-8 sm:h-8 text-slate-600 mb-1.5" />
+                    <p className="text-xs font-semibold text-slate-300 truncate max-w-[80%]">{cam.name}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Stream: <span className="text-slate-300 font-medium">{cam.streamStatus || 'UNAVAILABLE'}</span>
                     </p>
                     <p className="text-[10px] text-slate-500 italic mt-0.5">
                       No live RTSP integration in 20% MVP
                     </p>
-                    <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                    <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center gap-1 sm:gap-1.5">
                       <Badge variant="neutral" size="sm">
                         Stream: {cam.streamStatus || 'UNAVAILABLE'}
                       </Badge>
                       {getCameraStatusBadge(cam.status)}
                     </div>
                   </div>
-                  <div className="p-3 bg-slate-900 flex items-center justify-between text-xs border-t border-slate-800">
-                    <div>
+                  <div className="p-2.5 sm:p-3 bg-slate-900 flex items-center justify-between text-xs border-t border-slate-800">
+                    <div className="min-w-0 pr-2">
                       <span className="font-semibold text-white font-mono">{cam.cameraCode}</span>
-                      <span className="text-slate-400 ml-2">
+                      <span className="text-slate-400 ml-2 truncate">
                         {cam.site} · {cam.location}
                       </span>
                     </div>
-                    <span className="text-[11px] text-slate-400">
-                      Heartbeat: {cam.lastSeenAt ? new Date(cam.lastSeenAt).toLocaleTimeString() : 'null (No telemetry)'}
+                    <span className="text-[11px] text-slate-400 shrink-0">
+                      {cam.lastSeenAt ? new Date(cam.lastSeenAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'null (No telemetry)'}
                     </span>
                   </div>
                 </div>
@@ -361,49 +361,87 @@ export function DashboardPage() {
           </div>
         ) : (
           <div>
-            <div className="sm:hidden px-3.5 py-1.5 bg-slate-50/80 border-b border-slate-100 text-[10px] text-slate-400 flex items-center justify-between">
-              <span>Swipe horizontally to view full table</span>
-              <span>&rarr;</span>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Alert ID</TableHead>
-                  <TableHead>Violation Type</TableHead>
-                  <TableHead>Camera / Zone</TableHead>
-                  <TableHead>Severity</TableHead>
-                  <TableHead>Confidence</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Detected Time</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.recentAlerts.map((alert) => (
-                  <TableRow key={alert._id} data-testid={`dashboard-recent-alert-${alert.alertCode}`}>
-                    <TableCell className="font-mono text-xs font-semibold text-[var(--color-primary)]">
+            {/* Mobile Card View (< md) */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {data.recentAlerts.map((alert) => (
+                <div
+                  key={alert._id}
+                  className="p-3.5 space-y-2 hover:bg-slate-50/60 transition-colors"
+                  data-testid={`dashboard-recent-alert-${alert.alertCode}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-xs font-bold text-[var(--color-primary)]">
                       {alert.alertCode}
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium text-slate-900 block">{alert.violationName}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-semibold text-slate-800">{alert.camera?.cameraCode || alert.cameraCode}</span>
-                      <p className="text-[11px] text-[var(--color-text-muted)]">
-                        {alert.camera?.name || alert.location}
-                      </p>
-                    </TableCell>
-                    <TableCell>{getSeverityBadge(alert.severity)}</TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {(alert.confidence * 100).toFixed(1)}%
-                    </TableCell>
-                    <TableCell>{getAlertStatusBadge(alert.status)}</TableCell>
-                    <TableCell className="text-xs text-[var(--color-text-muted)]">
-                      {alert.detectedAt ? new Date(alert.detectedAt).toLocaleTimeString() : 'N/A'}
-                    </TableCell>
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {getSeverityBadge(alert.severity)}
+                      {getAlertStatusBadge(alert.status)}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="font-semibold text-slate-900 text-xs block">
+                      {alert.violationName}
+                    </span>
+                    <span className="text-[11px] text-[var(--color-text-muted)] mt-0.5 block">
+                      {alert.camera?.cameraCode || alert.cameraCode} · {alert.camera?.name || alert.location}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1.5 border-t border-slate-100">
+                    <span>
+                      Confidence: <strong className="font-mono text-slate-700">{(alert.confidence * 100).toFixed(1)}%</strong>
+                    </span>
+                    <span>
+                      {alert.detectedAt ? new Date(alert.detectedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View (>= md) */}
+            <div className="hidden md:block overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Alert ID</TableHead>
+                    <TableHead>Violation Type</TableHead>
+                    <TableHead>Camera / Zone</TableHead>
+                    <TableHead>Severity</TableHead>
+                    <TableHead>Confidence</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Detected Time</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {data.recentAlerts.map((alert) => (
+                    <TableRow key={alert._id} data-testid={`dashboard-recent-alert-table-${alert.alertCode}`}>
+                      <TableCell className="font-mono text-xs font-semibold text-[var(--color-primary)]">
+                        {alert.alertCode}
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium text-slate-900 block">{alert.violationName}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-semibold text-slate-800">{alert.camera?.cameraCode || alert.cameraCode}</span>
+                        <p className="text-[11px] text-[var(--color-text-muted)]">
+                          {alert.camera?.name || alert.location}
+                        </p>
+                      </TableCell>
+                      <TableCell>{getSeverityBadge(alert.severity)}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {(alert.confidence * 100).toFixed(1)}%
+                      </TableCell>
+                      <TableCell>{getAlertStatusBadge(alert.status)}</TableCell>
+                      <TableCell className="text-xs text-[var(--color-text-muted)]">
+                        {alert.detectedAt ? new Date(alert.detectedAt).toLocaleTimeString() : 'N/A'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         )}
       </Card>

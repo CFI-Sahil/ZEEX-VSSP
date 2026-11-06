@@ -144,7 +144,7 @@ export function CamerasPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-xl font-bold text-[var(--color-text-main)] tracking-tight">
             Registered Cameras
@@ -154,7 +154,13 @@ export function CamerasPage() {
           </p>
         </div>
         {isAdmin && (
-          <Button variant="primary" icon={Plus} onClick={handleOpenAdd} data-testid="add-camera-btn">
+          <Button
+            variant="primary"
+            icon={Plus}
+            onClick={handleOpenAdd}
+            data-testid="add-camera-btn"
+            className="w-full sm:w-auto justify-center"
+          >
             Add Camera
           </Button>
         )}
@@ -162,7 +168,7 @@ export function CamerasPage() {
 
       {/* Filter and Search Toolbar */}
       <Card>
-        <div className="p-3.5 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="p-3.5 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           <div className="relative w-full md:w-80">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -175,7 +181,7 @@ export function CamerasPage() {
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+          <div className="flex items-center gap-2 w-full md:w-auto justify-between sm:justify-end">
             <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
               <Filter className="w-3.5 h-3.5" />
               <span className="hidden sm:inline font-medium">Status:</span>
@@ -183,7 +189,7 @@ export function CamerasPage() {
             <select
               value={statusFilter}
               onChange={(e) => handleStatusFilterChange(e.target.value)}
-              className="px-2.5 py-1.5 text-xs bg-slate-50 border border-[var(--color-border)] rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="flex-1 sm:flex-none px-2.5 py-1.5 text-xs bg-slate-50 border border-[var(--color-border)] rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
               data-testid="status-filter-select"
             >
               <option value="ALL">All Statuses</option>
@@ -254,96 +260,169 @@ export function CamerasPage() {
           </div>
         ) : (
           <>
-            <div className="sm:hidden px-3.5 py-1.5 bg-slate-50/80 border-b border-slate-100 text-[10px] text-slate-400 flex items-center justify-between">
-              <span>Swipe horizontally to view full table & actions</span>
-              <span>&rarr;</span>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Camera Code</TableHead>
-                  <TableHead>Camera Name</TableHead>
-                  <TableHead>Site Location</TableHead>
-                  <TableHead>Work-Front</TableHead>
-                  <TableHead>Admin Status</TableHead>
-                  <TableHead>Stream Connectivity</TableHead>
-                  <TableHead>Last Heartbeat</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {cameras.map((cam) => (
-                  <TableRow key={cam._id} data-testid={`camera-row-${cam.cameraCode}`}>
-                    <TableCell className="font-mono text-xs font-semibold text-[var(--color-primary)]">
-                      {cam.cameraCode}
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium text-slate-900 block">{cam.name}</span>
-                      {cam.description && (
-                        <span className="text-[11px] text-[var(--color-text-muted)] line-clamp-1">
-                          {cam.description}
+            {/* Mobile Cards (< md) */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {cameras.map((cam) => (
+                <div
+                  key={cam._id}
+                  className="p-3.5 space-y-2.5 hover:bg-slate-50/60 transition-colors"
+                  data-testid={`camera-card-${cam.cameraCode}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold text-[var(--color-primary)] bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                          {cam.cameraCode}
                         </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs text-[var(--color-text-muted)]">
-                      {cam.site} · {cam.location}
-                    </TableCell>
-                    <TableCell>
-                      {cam.workFront ? (
-                        <div className="flex items-center gap-1.5">
-                          <HardHat className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                          <div>
-                            <span className="font-mono text-xs font-bold text-slate-800">
-                              {cam.workFront.workFrontCode}
-                            </span>
-                            <span className="text-[10px] text-slate-500 block truncate max-w-[120px]">
-                              {cam.workFront.name}
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 italic">Unassigned</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(cam.status)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="neutral">
-                        {cam.streamStatus || 'UNAVAILABLE'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-[var(--color-text-muted)]">
-                      {cam.lastSeenAt ? new Date(cam.lastSeenAt).toLocaleString() : 'Never (Null)'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          icon={Eye}
-                          onClick={() => handleOpenDetail(cam)}
-                          data-testid={`inspect-btn-${cam.cameraCode}`}
-                        >
-                          Inspect
-                        </Button>
-                        {isAdmin && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            icon={Edit}
-                            onClick={() => handleOpenEdit(cam)}
-                            data-testid={`edit-btn-${cam.cameraCode}`}
-                          >
-                            Edit
-                          </Button>
+                        <span className="font-semibold text-slate-900 text-xs sm:text-sm">{cam.name}</span>
+                      </div>
+                      <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                        {cam.site} · {cam.location}
+                      </p>
+                    </div>
+                    <div className="shrink-0">{getStatusBadge(cam.status)}</div>
+                  </div>
+
+                  {/* Work-Front & Stream Status Row */}
+                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs gap-2">
+                    <div className="min-w-0 flex items-center gap-1.5">
+                      <HardHat className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <div className="min-w-0">
+                        {cam.workFront ? (
+                          <span className="font-semibold text-slate-800 truncate block text-[11px] sm:text-xs">
+                            {cam.workFront.workFrontCode} ({cam.workFront.name})
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 italic text-[11px]">Unassigned</span>
                         )}
                       </div>
-                    </TableCell>
+                    </div>
+                    <Badge variant="neutral" size="sm">
+                      Stream: {cam.streamStatus || 'UNAVAILABLE'}
+                    </Badge>
+                  </div>
+
+                  {/* Heartbeat & Actions Footer */}
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+                    <span className="text-[11px] text-slate-400">
+                      Heartbeat: {cam.lastSeenAt ? new Date(cam.lastSeenAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never'}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={Eye}
+                        onClick={() => handleOpenDetail(cam)}
+                        data-testid={`inspect-btn-${cam.cameraCode}`}
+                      >
+                        Inspect
+                      </Button>
+                      {isAdmin && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          icon={Edit}
+                          onClick={() => handleOpenEdit(cam)}
+                          data-testid={`edit-btn-${cam.cameraCode}`}
+                        >
+                          Edit
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table (>= md) */}
+            <div className="hidden md:block overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Camera Code</TableHead>
+                    <TableHead>Camera Name</TableHead>
+                    <TableHead>Site Location</TableHead>
+                    <TableHead>Work-Front</TableHead>
+                    <TableHead>Admin Status</TableHead>
+                    <TableHead>Stream Connectivity</TableHead>
+                    <TableHead>Last Heartbeat</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {cameras.map((cam) => (
+                    <TableRow key={cam._id} data-testid={`camera-row-${cam.cameraCode}`}>
+                      <TableCell className="font-mono text-xs font-semibold text-[var(--color-primary)]">
+                        {cam.cameraCode}
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium text-slate-900 block">{cam.name}</span>
+                        {cam.description && (
+                          <span className="text-[11px] text-[var(--color-text-muted)] line-clamp-1">
+                            {cam.description}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-[var(--color-text-muted)]">
+                        {cam.site} · {cam.location}
+                      </TableCell>
+                      <TableCell>
+                        {cam.workFront ? (
+                          <div className="flex items-center gap-1.5">
+                            <HardHat className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                            <div>
+                              <span className="font-mono text-xs font-bold text-slate-800">
+                                {cam.workFront.workFrontCode}
+                              </span>
+                              <span className="text-[10px] text-slate-500 block truncate max-w-[120px]">
+                                {cam.workFront.name}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 italic">Unassigned</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(cam.status)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="neutral">
+                          {cam.streamStatus || 'UNAVAILABLE'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-[var(--color-text-muted)]">
+                        {cam.lastSeenAt ? new Date(cam.lastSeenAt).toLocaleString() : 'Never (Null)'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={Eye}
+                            onClick={() => handleOpenDetail(cam)}
+                            data-testid={`inspect-btn-${cam.cameraCode}`}
+                          >
+                            Inspect
+                          </Button>
+                          {isAdmin && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              icon={Edit}
+                              onClick={() => handleOpenEdit(cam)}
+                              data-testid={`edit-btn-${cam.cameraCode}`}
+                            >
+                              Edit
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
 
             {/* Pagination footer */}
             <div className="p-3.5 border-t border-[var(--color-border)] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--color-text-muted)]">

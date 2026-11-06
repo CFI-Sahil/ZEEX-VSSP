@@ -85,7 +85,7 @@ export function EvidencePage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-xl font-bold text-[var(--color-text-main)] tracking-tight">
             Evidence Vault & Snapshots
@@ -94,21 +94,23 @@ export function EvidencePage() {
             Authorised inspection of safety violation snapshots with cryptographic verification.
           </p>
         </div>
-        <Badge variant="navy">Images Only (JPEG / PNG / WebP)</Badge>
+        <Badge variant="navy" className="self-start sm:self-auto">
+          Images Only (JPEG / PNG / WebP)
+        </Badge>
       </div>
 
       {/* Filter Toolbar */}
       <Card>
-        <div className="p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="p-3 sm:p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Camera className="w-4 h-4 text-slate-400" />
+            <Camera className="w-4 h-4 text-slate-400 shrink-0" />
             <select
               value={cameraFilter}
               onChange={(e) => {
                 setCameraFilter(e.target.value);
                 setPagination((p) => ({ ...p, page: 1 }));
               }}
-              className="px-3 py-1.5 text-xs bg-slate-50 border border-[var(--color-border)] rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="w-full sm:w-auto px-3 py-1.5 text-xs bg-slate-50 border border-[var(--color-border)] rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
               data-testid="evidence-camera-filter"
             >
               <option value="">All Camera Points</option>
@@ -171,7 +173,7 @@ export function EvidencePage() {
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5">
             {evidenceList.map((ev) => (
               <Card
                 key={ev._id}
@@ -180,7 +182,7 @@ export function EvidencePage() {
               >
                 {/* Snapshot Image Container */}
                 <div
-                  className="h-48 bg-slate-950 relative flex flex-col items-center justify-center text-center overflow-hidden cursor-pointer group"
+                  className="h-40 sm:h-48 bg-slate-950 relative flex flex-col items-center justify-center text-center overflow-hidden cursor-pointer group"
                   onClick={() => setInspectItem(ev)}
                 >
                   <img
@@ -205,7 +207,7 @@ export function EvidencePage() {
                   </div>
                 </div>
 
-                <CardContent className="space-y-3 flex-1 flex flex-col justify-between">
+                <CardContent className="p-3 sm:p-4 space-y-2.5 sm:space-y-3 flex-1 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-mono font-semibold text-[var(--color-primary)]">
@@ -215,7 +217,7 @@ export function EvidencePage() {
                         {ev.capturedAt ? new Date(ev.capturedAt).toLocaleTimeString() : 'N/A'}
                       </span>
                     </div>
-                    <h4 className="text-sm font-semibold text-[var(--color-text-main)] mt-1 line-clamp-1">
+                    <h4 className="text-xs sm:text-sm font-semibold text-[var(--color-text-main)] mt-1 line-clamp-1">
                       {ev.alert?.violationName || ev.description || 'Safety Detection'}
                     </h4>
                     <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
@@ -223,7 +225,7 @@ export function EvidencePage() {
                     </p>
                   </div>
 
-                  <div className="pt-3 border-t border-[var(--color-border)] flex items-center justify-between text-xs">
+                  <div className="pt-2.5 sm:pt-3 border-t border-[var(--color-border)] flex items-center justify-between text-xs">
                     <span className="text-[11px] text-slate-400">
                       Size: {(ev.fileSize / 1024).toFixed(1)} KB
                     </span>

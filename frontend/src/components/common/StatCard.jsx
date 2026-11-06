@@ -36,28 +36,30 @@ export function StatCard({
   icon: Icon,
   badge,
   colorVariant = 'blue',
+  statusColor,
   onClick,
   className,
   ...props
 }) {
   const isClickable = Boolean(onClick);
-  const theme = colorThemes[colorVariant] || colorThemes.blue;
+  const themeKey = statusColor || colorVariant;
+  const theme = colorThemes[themeKey] || colorThemes.blue;
 
   return (
     <Card
       onClick={onClick}
       className={cn(
-        'p-4 sm:p-4.5 flex flex-col justify-between h-full min-h-[148px] rounded-xl border border-slate-200/90 bg-white shadow-2xs hover:shadow-xs transition-all duration-150',
+        'p-3 sm:p-4 flex flex-col justify-between h-full min-h-[105px] sm:min-h-[135px] rounded-xl border border-slate-200/90 bg-white shadow-2xs hover:shadow-xs transition-all duration-150',
         isClickable && 'cursor-pointer hover:border-blue-400 hover:shadow-sm',
         className
       )}
       {...props}
     >
       {/* Top Bar: Icon Container & Category Badge */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-1.5">
         {Icon ? (
-          <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', theme.iconBg)}>
-            <Icon className="w-4 h-4" />
+          <div className={cn('w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0', theme.iconBg)}>
+            <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </div>
         ) : (
           <div />
@@ -65,7 +67,7 @@ export function StatCard({
         {badge && (
           <span
             className={cn(
-              'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase shrink-0',
+              'inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold tracking-wide uppercase shrink-0 max-w-[100px] truncate',
               theme.badge
             )}
           >
@@ -75,11 +77,11 @@ export function StatCard({
       </div>
 
       {/* Middle Block: Prominent Metric & Clear Title */}
-      <div className="my-2 space-y-0.5">
-        <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-none">
+      <div className="my-1.5 sm:my-2 space-y-0.5">
+        <p className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight leading-none">
           {value ?? '—'}
         </p>
-        <p className="text-xs font-semibold text-slate-700 tracking-normal uppercase leading-snug">
+        <p className="text-[10px] sm:text-xs font-semibold text-slate-700 tracking-normal uppercase leading-snug line-clamp-1">
           {title}
         </p>
       </div>
@@ -87,7 +89,7 @@ export function StatCard({
       {/* Bottom Row: Contextual Subtitle */}
       {subtitle && (
         <div
-          className="pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-normal leading-normal truncate"
+          className="pt-1.5 sm:pt-2 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-500 font-normal leading-normal truncate"
           title={subtitle}
         >
           {subtitle}

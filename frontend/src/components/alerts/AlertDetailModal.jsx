@@ -181,42 +181,42 @@ export function AlertDetailModal({
         </div>
 
         {/* Metadata Details Grid */}
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+        <div className="grid grid-cols-1 xs:grid-cols-2 gap-2.5 sm:gap-3 text-xs">
+          <div className="p-2.5 sm:p-3 bg-slate-50 rounded-lg border border-slate-200">
             <div className="flex items-center gap-1.5 text-slate-500 font-medium mb-1">
               <Camera className="w-3.5 h-3.5" />
               <span>Camera Point</span>
             </div>
             <p className="font-semibold text-slate-900">{alert.cameraCode}</p>
-            <p className="text-slate-500">{alert.camera?.name || 'Monitoring Point'}</p>
+            <p className="text-slate-500 truncate">{alert.camera?.name || 'Monitoring Point'}</p>
           </div>
 
-          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="p-2.5 sm:p-3 bg-slate-50 rounded-lg border border-slate-200">
             <div className="flex items-center gap-1.5 text-slate-500 font-medium mb-1">
               <MapPin className="w-3.5 h-3.5" />
               <span>Incident Location</span>
             </div>
-            <p className="font-semibold text-slate-900">{alert.location}</p>
-            <p className="text-slate-500">{alert.camera?.site || 'Site Facility'}</p>
+            <p className="font-semibold text-slate-900 truncate">{alert.location}</p>
+            <p className="text-slate-500 truncate">{alert.camera?.site || 'Site Facility'}</p>
           </div>
 
-          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="p-2.5 sm:p-3 bg-slate-50 rounded-lg border border-slate-200">
             <div className="flex items-center gap-1.5 text-slate-500 font-medium mb-1">
               <Clock className="w-3.5 h-3.5" />
               <span>Detection Timestamp</span>
             </div>
-            <p className="font-semibold text-slate-900">
+            <p className="font-semibold text-slate-900 truncate">
               {alert.detectedAt ? new Date(alert.detectedAt).toLocaleString() : 'N/A'}
             </p>
           </div>
 
-          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="p-2.5 sm:p-3 bg-slate-50 rounded-lg border border-slate-200">
             <div className="flex items-center gap-1.5 text-slate-500 font-medium mb-1">
               <User className="w-3.5 h-3.5" />
               <span>Lifecycle State</span>
             </div>
             <p className="font-semibold text-slate-900">{alert.status}</p>
-            <p className="text-slate-500">
+            <p className="text-slate-500 truncate">
               {alert.status === 'PENDING'
                 ? 'Awaiting review'
                 : alert.status === 'ACKNOWLEDGED'

@@ -80,7 +80,7 @@ export function CameraDetailModal({ isOpen, onClose, camera }) {
         )}
 
         {/* Detailed Metadata Grid */}
-        <div className="grid grid-cols-2 gap-4 text-xs">
+        <div className="grid grid-cols-1 xs:grid-cols-2 gap-2.5 sm:gap-4 text-xs">
           <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80">
             <div className="flex items-center gap-1.5 text-slate-500 font-medium mb-1">
               <MapPin className="w-3.5 h-3.5" />
@@ -95,7 +95,7 @@ export function CameraDetailModal({ isOpen, onClose, camera }) {
               <Clock className="w-3.5 h-3.5" />
               <span>Last Heartbeat</span>
             </div>
-            <p className="font-semibold text-slate-900">
+            <p className="font-semibold text-slate-900 truncate">
               {camera.lastSeenAt ? new Date(camera.lastSeenAt).toLocaleString() : 'None (Unverified / Null)'}
             </p>
             <p className="text-slate-500 mt-0.5">Telemetry state</p>

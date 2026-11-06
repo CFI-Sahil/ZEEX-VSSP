@@ -6,6 +6,7 @@ import Topbar from './Topbar';
 const pageTitleMap = {
   '/': 'Dashboard Overview',
   '/cameras': 'Camera Registry & Feeds',
+  '/work-fronts': 'Work-Front Registry',
   '/alerts': 'Safety Alert Management',
   '/evidence': 'Evidence & Snapshots',
 };
@@ -29,7 +30,7 @@ export function AppShell() {
         />
 
         {/* Page Content Viewport */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-5 sm:space-y-6 min-w-0">
           <Outlet />
         </main>
       </div>

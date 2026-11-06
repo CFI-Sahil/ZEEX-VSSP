@@ -222,10 +222,10 @@ export function WorkFrontsPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <HardHat className="w-6 h-6 text-[var(--color-primary)]" />
+            <HardHat className="w-6 h-6 text-[var(--color-primary)] shrink-0" />
             <span>Work-Front Registry</span>
           </h2>
           <p className="text-xs text-slate-500 mt-1">
@@ -233,7 +233,7 @@ export function WorkFrontsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           <Button
             variant="secondary"
             size="sm"
@@ -263,7 +263,7 @@ export function WorkFrontsPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <StatCard
           title="Active Work-Fronts"
           value={kpis.activeWorkFronts}
@@ -300,10 +300,10 @@ export function WorkFrontsPage() {
       {/* Main Content Card */}
       <Card>
         {/* Filters and Search Bar */}
-        <div className="p-4 border-b border-slate-200/80 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+        <div className="p-3.5 sm:p-4 border-b border-slate-200/80 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-1 flex-wrap">
             {/* Search Input */}
-            <div className="relative flex-1 max-w-sm">
+            <div className="relative flex-1 min-w-[200px] max-w-full sm:max-w-xs">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
@@ -315,66 +315,69 @@ export function WorkFrontsPage() {
               />
             </div>
 
-            {/* Status Filter */}
-            <div className="flex items-center gap-1.5">
-              <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setPagination((prev) => ({ ...prev, page: 1 }));
-                }}
-                data-testid="workfront-status-filter"
-                className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] cursor-pointer"
-              >
-                <option value="ALL">All Statuses</option>
-                <option value="ACTIVE">Active</option>
-                <option value="PLANNING">Planning</option>
-                <option value="SUSPENDED">Suspended</option>
-                <option value="COMPLETED">Completed</option>
-              </select>
-            </div>
+            {/* Dropdowns wrapper */}
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
+              {/* Status Filter */}
+              <div className="flex items-center gap-1.5">
+                <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0 hidden sm:inline" />
+                <select
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    setPagination((prev) => ({ ...prev, page: 1 }));
+                  }}
+                  data-testid="workfront-status-filter"
+                  className="w-full sm:w-auto px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] cursor-pointer"
+                >
+                  <option value="ALL">All Statuses</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="PLANNING">Planning</option>
+                  <option value="SUSPENDED">Suspended</option>
+                  <option value="COMPLETED">Completed</option>
+                </select>
+              </div>
 
-            {/* Risk Level Filter */}
-            <div>
-              <select
-                value={riskFilter}
-                onChange={(e) => {
-                  setRiskFilter(e.target.value);
-                  setPagination((prev) => ({ ...prev, page: 1 }));
-                }}
-                data-testid="workfront-risk-filter"
-                className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] cursor-pointer"
-              >
-                <option value="ALL">All Risk Levels</option>
-                <option value="CRITICAL">Critical Risk</option>
-                <option value="HIGH">High Risk</option>
-                <option value="MEDIUM">Medium Risk</option>
-                <option value="LOW">Low Risk</option>
-              </select>
-            </div>
+              {/* Risk Level Filter */}
+              <div>
+                <select
+                  value={riskFilter}
+                  onChange={(e) => {
+                    setRiskFilter(e.target.value);
+                    setPagination((prev) => ({ ...prev, page: 1 }));
+                  }}
+                  data-testid="workfront-risk-filter"
+                  className="w-full sm:w-auto px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] cursor-pointer"
+                >
+                  <option value="ALL">All Risk Levels</option>
+                  <option value="CRITICAL">Critical Risk</option>
+                  <option value="HIGH">High Risk</option>
+                  <option value="MEDIUM">Medium Risk</option>
+                  <option value="LOW">Low Risk</option>
+                </select>
+              </div>
 
-            {/* Activity Type Filter */}
-            <div>
-              <select
-                value={activityFilter}
-                onChange={(e) => {
-                  setActivityFilter(e.target.value);
-                  setPagination((prev) => ({ ...prev, page: 1 }));
-                }}
-                data-testid="workfront-activity-filter"
-                className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] cursor-pointer"
-              >
-                <option value="ALL">All Activities</option>
-                <option value="WORKING_AT_HEIGHT">Work at Height</option>
-                <option value="HOT_WORK">Hot Work</option>
-                <option value="EXCAVATION">Excavation</option>
-                <option value="CONFINED_SPACE">Confined Space</option>
-                <option value="HEAVY_LIFTING">Heavy Lifting</option>
-                <option value="ELECTRICAL">Electrical</option>
-                <option value="GENERAL_CONSTRUCTION">General Construction</option>
-                <option value="OTHER">Other</option>
-              </select>
+              {/* Activity Type Filter */}
+              <div className="col-span-2 sm:col-span-1">
+                <select
+                  value={activityFilter}
+                  onChange={(e) => {
+                    setActivityFilter(e.target.value);
+                    setPagination((prev) => ({ ...prev, page: 1 }));
+                  }}
+                  data-testid="workfront-activity-filter"
+                  className="w-full sm:w-auto px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] cursor-pointer"
+                >
+                  <option value="ALL">All Activities</option>
+                  <option value="WORKING_AT_HEIGHT">Work at Height</option>
+                  <option value="HOT_WORK">Hot Work</option>
+                  <option value="EXCAVATION">Excavation</option>
+                  <option value="CONFINED_SPACE">Confined Space</option>
+                  <option value="HEAVY_LIFTING">Heavy Lifting</option>
+                  <option value="ELECTRICAL">Electrical</option>
+                  <option value="GENERAL_CONSTRUCTION">General Construction</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -464,7 +467,91 @@ export function WorkFrontsPage() {
           />
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Mobile Cards (< lg) */}
+            <div className="lg:hidden divide-y divide-slate-100">
+              {workFronts.map((wf) => (
+                <div
+                  key={wf._id}
+                  className="p-3.5 space-y-2.5 hover:bg-slate-50/60 transition-colors"
+                  data-testid={`workfront-card-${wf.workFrontCode}`}
+                >
+                  {/* Card Top: Code + Status Badge + Actions */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-xs font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                        {wf.workFrontCode}
+                      </span>
+                      {getStatusBadge(wf.status)}
+                      {getRiskBadge(wf.riskLevel)}
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleInspect(wf)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                        title="View Full Details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingWorkFront(wf);
+                            setIsModalOpen(true);
+                          }}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-[var(--color-primary)] hover:bg-slate-100 transition-colors cursor-pointer"
+                          title="Edit Work-Front"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Name & Zone */}
+                  <div>
+                    <h4 className="font-semibold text-slate-900 text-xs sm:text-sm">{wf.name}</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      {wf.site} · {wf.zone}
+                    </p>
+                  </div>
+
+                  {/* Metadata Grid */}
+                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80 grid grid-cols-2 gap-2 text-[11px]">
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Contractor</span>
+                      <span className="font-medium text-slate-800 truncate block">{wf.contractor}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Supervisor</span>
+                      <span className="font-medium text-slate-800 truncate block">
+                        {wf.supervisor?.name || 'Unassigned'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Activity</span>
+                      <span className="font-medium text-slate-800 truncate block">
+                        {formatActivity(wf.activityType)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Shift & Cameras</span>
+                      <span className="font-medium text-slate-800 flex items-center gap-1">
+                        <span>{formatShift(wf.shift)}</span>
+                        <span>·</span>
+                        <Video className="w-3 h-3 text-slate-400 inline" />
+                        <span>{wf.cameras?.length || 0}</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table (>= lg) */}
+            <div className="hidden lg:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>

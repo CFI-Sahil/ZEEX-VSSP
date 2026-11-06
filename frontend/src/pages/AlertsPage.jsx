@@ -176,7 +176,7 @@ export function AlertsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-xl font-bold text-[var(--color-text-main)] tracking-tight">
             Safety Violations & Alerts
@@ -185,7 +185,7 @@ export function AlertsPage() {
             Review incoming safety incidents, inspect snapshot evidence, and manage acknowledgment lifecycle.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {pendingCount > 0 && (
             <Badge variant="warning" dot>
               {pendingCount} Pending Review
@@ -197,6 +197,7 @@ export function AlertsPage() {
             icon={Sparkles}
             onClick={() => setIsDemoModalOpen(true)}
             data-testid="simulate-event-btn"
+            className="w-full sm:w-auto justify-center"
           >
             Simulate Violation Event
           </Button>
@@ -205,8 +206,8 @@ export function AlertsPage() {
 
       {/* Filter and Search Bar */}
       <Card>
-        <div className="p-3.5 flex flex-col md:flex-row items-center justify-between gap-3">
-          <div className="relative w-full md:w-80">
+        <div className="p-3.5 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-sm">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
@@ -218,7 +219,7 @@ export function AlertsPage() {
             />
           </div>
 
-          <div className="flex items-center flex-wrap gap-2 w-full md:w-auto justify-end">
+          <div className="flex items-center flex-wrap gap-2 shrink-0 justify-between sm:justify-end">
             {/* Status Filter */}
             <div className="flex items-center gap-1.5 text-xs text-slate-600">
               <span className="font-medium hidden sm:inline">Status:</span>
@@ -325,133 +326,242 @@ export function AlertsPage() {
           </div>
         ) : (
           <>
-            <div className="sm:hidden px-3.5 py-1.5 bg-slate-50/80 border-b border-slate-100 text-[10px] text-slate-400 flex items-center justify-between">
-              <span>Swipe horizontally to view full table & actions</span>
-              <span>&rarr;</span>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Alert Code</TableHead>
-                  <TableHead>Violation Type</TableHead>
-                  <TableHead>Work-Front / Contractor</TableHead>
-                  <TableHead>Camera Location</TableHead>
-                  <TableHead>Severity</TableHead>
-                  <TableHead>Confidence</TableHead>
-                  <TableHead>Lifecycle Status</TableHead>
-                  <TableHead>Detected Time</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {alerts.map((alert) => (
-                  <TableRow key={alert._id} data-testid={`alert-row-${alert.alertCode}`}>
-                    <TableCell className="font-mono text-xs font-semibold text-[var(--color-primary)]">
-                      {alert.alertCode}
-                      <span className="block text-[10px] text-slate-400 font-normal">
+            {/* Mobile Cards (< lg) */}
+            <div className="lg:hidden divide-y divide-slate-100">
+              {alerts.map((alert) => (
+                <div
+                  key={alert._id}
+                  className="p-3.5 space-y-2.5 hover:bg-slate-50/60 transition-colors"
+                  data-testid={`alert-card-${alert.alertCode}`}
+                >
+                  {/* Header: Alert Code + Status Badge + Time */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-[var(--color-primary)]">
+                        {alert.alertCode}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
                         {alert.eventId}
                       </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-semibold text-slate-900 block">
-                        {alert.violationName}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {getStatusBadge(alert.status)}
+                      <span className="text-[11px] text-slate-400">
+                        {alert.detectedAt ? new Date(alert.detectedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                       </span>
+                    </div>
+                  </div>
+
+                  {/* Main Row: Violation Name + Severity Badge + Confidence */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h4 className="font-semibold text-slate-900 text-xs sm:text-sm">{alert.violationName}</h4>
                       {alert.description && (
-                        <span className="text-[11px] text-[var(--color-text-muted)] line-clamp-1">
+                        <p className="text-[11px] text-[var(--color-text-muted)] line-clamp-1 mt-0.5">
                           {alert.description}
-                        </span>
+                        </p>
                       )}
-                    </TableCell>
-                    <TableCell>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {getSeverityBadge(alert.severity)}
+                      <span className="font-mono text-[11px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">
+                        {(alert.confidence * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Context Row: Work-Front & Camera */}
+                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80 grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block">Work-Front / Contractor</span>
                       {alert.workFrontCode ? (
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-mono text-xs font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
-                              {alert.workFrontCode}
-                            </span>
-                            {alert.riskLevel && (
-                              <span
-                                className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
-                                  alert.riskLevel === 'CRITICAL'
-                                    ? 'bg-rose-100 text-rose-700'
-                                    : alert.riskLevel === 'HIGH'
-                                    ? 'bg-amber-100 text-amber-700'
-                                    : alert.riskLevel === 'MEDIUM'
-                                    ? 'bg-sky-100 text-sky-700'
-                                    : 'bg-emerald-100 text-emerald-700'
-                                }`}
-                              >
-                                {alert.riskLevel}
-                              </span>
-                            )}
-                          </div>
-                          <span
-                            className="text-[11px] text-slate-500 block truncate max-w-[150px]"
-                            title={alert.contractor || alert.workFrontName || ''}
-                          >
+                        <div className="min-w-0">
+                          <span className="font-mono text-xs font-semibold text-blue-700">
+                            {alert.workFrontCode}
+                          </span>
+                          <span className="text-[11px] text-slate-500 block truncate">
                             {alert.contractor || alert.workFrontName || '—'}
                           </span>
                         </div>
                       ) : (
                         <span className="text-[11px] text-slate-400 italic">Unassigned</span>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium text-slate-800 block">{alert.cameraCode}</span>
-                      <span className="text-[11px] text-[var(--color-text-muted)]">
-                        {alert.location}
-                      </span>
-                    </TableCell>
-                    <TableCell>{getSeverityBadge(alert.severity)}</TableCell>
-                    <TableCell className="font-mono text-xs font-semibold text-slate-700">
-                      {(alert.confidence * 100).toFixed(1)}%
-                    </TableCell>
-                    <TableCell>{getStatusBadge(alert.status)}</TableCell>
-                    <TableCell className="text-xs text-[var(--color-text-muted)]">
-                      {alert.detectedAt ? new Date(alert.detectedAt).toLocaleTimeString() : 'N/A'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          icon={Eye}
-                          onClick={() => setInspectAlert(alert)}
-                          data-testid={`inspect-alert-${alert.alertCode}`}
-                        >
-                          Inspect
-                        </Button>
+                    </div>
 
-                        {alert.status === 'PENDING' && (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            icon={CheckCircle}
-                            onClick={() => handleAcknowledge(alert._id)}
-                            isLoading={isActionLoading}
-                            data-testid={`ack-alert-${alert.alertCode}`}
-                          >
-                            Acknowledge
-                          </Button>
-                        )}
+                    <div>
+                      <span className="text-[10px] text-slate-400 block">Camera Point</span>
+                      <span className="font-medium text-slate-800 text-xs block">{alert.cameraCode}</span>
+                      <span className="text-[11px] text-slate-500 block truncate">{alert.location}</span>
+                    </div>
+                  </div>
 
-                        {alert.status === 'ACKNOWLEDGED' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            icon={ShieldCheck}
-                            onClick={() => setClosingAlert(alert)}
-                            data-testid={`close-alert-${alert.alertCode}`}
-                          >
-                            Close
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
+                  {/* Actions Footer */}
+                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon={Eye}
+                      onClick={() => setInspectAlert(alert)}
+                      data-testid={`inspect-alert-${alert.alertCode}`}
+                    >
+                      Inspect
+                    </Button>
+
+                    {alert.status === 'PENDING' && (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        icon={CheckCircle}
+                        onClick={() => handleAcknowledge(alert._id)}
+                        isLoading={isActionLoading}
+                        data-testid={`ack-alert-${alert.alertCode}`}
+                      >
+                        Acknowledge
+                      </Button>
+                    )}
+
+                    {alert.status === 'ACKNOWLEDGED' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        icon={ShieldCheck}
+                        onClick={() => setClosingAlert(alert)}
+                        data-testid={`close-alert-${alert.alertCode}`}
+                      >
+                        Close
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table (>= lg) */}
+            <div className="hidden lg:block overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Alert Code</TableHead>
+                    <TableHead>Violation Type</TableHead>
+                    <TableHead>Work-Front / Contractor</TableHead>
+                    <TableHead>Camera Location</TableHead>
+                    <TableHead>Severity</TableHead>
+                    <TableHead>Confidence</TableHead>
+                    <TableHead>Lifecycle Status</TableHead>
+                    <TableHead>Detected Time</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {alerts.map((alert) => (
+                    <TableRow key={alert._id} data-testid={`alert-row-${alert.alertCode}`}>
+                      <TableCell className="font-mono text-xs font-semibold text-[var(--color-primary)]">
+                        {alert.alertCode}
+                        <span className="block text-[10px] text-slate-400 font-normal">
+                          {alert.eventId}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-semibold text-slate-900 block">
+                          {alert.violationName}
+                        </span>
+                        {alert.description && (
+                          <span className="text-[11px] text-[var(--color-text-muted)] line-clamp-1">
+                            {alert.description}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {alert.workFrontCode ? (
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-mono text-xs font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                                {alert.workFrontCode}
+                              </span>
+                              {alert.riskLevel && (
+                                <span
+                                  className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
+                                    alert.riskLevel === 'CRITICAL'
+                                      ? 'bg-rose-100 text-rose-700'
+                                      : alert.riskLevel === 'HIGH'
+                                      ? 'bg-amber-100 text-amber-700'
+                                      : alert.riskLevel === 'MEDIUM'
+                                      ? 'bg-sky-100 text-sky-700'
+                                      : 'bg-emerald-100 text-emerald-700'
+                                  }`}
+                                >
+                                  {alert.riskLevel}
+                                </span>
+                              )}
+                            </div>
+                            <span
+                              className="text-[11px] text-slate-500 block truncate max-w-[150px]"
+                              title={alert.contractor || alert.workFrontName || ''}
+                            >
+                              {alert.contractor || alert.workFrontName || '—'}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 italic">Unassigned</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium text-slate-800 block">{alert.cameraCode}</span>
+                        <span className="text-[11px] text-[var(--color-text-muted)]">
+                          {alert.location}
+                        </span>
+                      </TableCell>
+                      <TableCell>{getSeverityBadge(alert.severity)}</TableCell>
+                      <TableCell className="font-mono text-xs font-semibold text-slate-700">
+                        {(alert.confidence * 100).toFixed(1)}%
+                      </TableCell>
+                      <TableCell>{getStatusBadge(alert.status)}</TableCell>
+                      <TableCell className="text-xs text-[var(--color-text-muted)]">
+                        {alert.detectedAt ? new Date(alert.detectedAt).toLocaleTimeString() : 'N/A'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={Eye}
+                            onClick={() => setInspectAlert(alert)}
+                            data-testid={`inspect-alert-${alert.alertCode}`}
+                          >
+                            Inspect
+                          </Button>
+
+                          {alert.status === 'PENDING' && (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              icon={CheckCircle}
+                              onClick={() => handleAcknowledge(alert._id)}
+                              isLoading={isActionLoading}
+                              data-testid={`ack-alert-${alert.alertCode}`}
+                            >
+                              Acknowledge
+                            </Button>
+                          )}
+
+                          {alert.status === 'ACKNOWLEDGED' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              icon={ShieldCheck}
+                              onClick={() => setClosingAlert(alert)}
+                              data-testid={`close-alert-${alert.alertCode}`}
+                            >
+                              Close
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
 
             {/* Pagination Controls */}
             <div className="p-3.5 border-t border-[var(--color-border)] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--color-text-muted)]">
