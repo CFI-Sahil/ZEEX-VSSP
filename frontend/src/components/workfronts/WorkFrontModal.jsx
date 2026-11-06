@@ -73,7 +73,9 @@ export function WorkFrontModal({
         zone: workFront.zone || '',
         contractor: workFront.contractor || '',
         supervisorName: workFront.supervisor?.name || '',
-        supervisorPhone: workFront.supervisor?.phone || '',
+        supervisorPhone: workFront.supervisor?.phone
+          ? workFront.supervisor.phone.replace(/\D/g, '').slice(-10)
+          : '',
         supervisorEmail: workFront.supervisor?.email || '',
         activityType: workFront.activityType || 'GENERAL_CONSTRUCTION',
         riskLevel: workFront.riskLevel || 'MEDIUM',
@@ -111,6 +113,15 @@ export function WorkFrontModal({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'supervisorPhone') {
+      // Allow only digits and enforce maximum 10 digits
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 10);
+      setFormData((prev) => ({
+        ...prev,
+        supervisorPhone: digitsOnly,
+      }));
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: name === 'workFrontCode' ? value.toUpperCase().trim() : value,
@@ -148,6 +159,11 @@ export function WorkFrontModal({
 
     if (!formData.supervisorName.trim()) {
       setErrorMessage('Supervisor name is required');
+      return;
+    }
+
+    if (formData.supervisorPhone && formData.supervisorPhone.length !== 10) {
+      setErrorMessage('Supervisor phone number must be exactly 10 digits');
       return;
     }
 
@@ -332,7 +348,10 @@ export function WorkFrontModal({
                 name="supervisorPhone"
                 value={formData.supervisorPhone}
                 onChange={handleChange}
-                placeholder="+91 98765 43210"
+                maxLength={10}
+                inputMode="numeric"
+                pattern="[0-9]{10}"
+                placeholder="e.g. 9876543210"
                 className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               />
             </div>
