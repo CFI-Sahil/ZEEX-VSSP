@@ -122,6 +122,52 @@ const alertSchema = new mongoose.Schema(
       ref: 'Evidence',
       default: null,
     },
+    // Operational Work-Front & Contractor Enrichment (Batch 3)
+    workFront: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'WorkFront',
+      default: null,
+      index: true,
+    },
+    workFrontCode: {
+      type: String,
+      default: null,
+      uppercase: true,
+      trim: true,
+      index: true,
+    },
+    workFrontName: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    contractor: {
+      type: String,
+      default: null,
+      trim: true,
+      index: true,
+    },
+    activityType: {
+      type: String,
+      default: null,
+      trim: true,
+      index: true,
+    },
+    riskLevel: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    shift: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    zone: {
+      type: String,
+      default: null,
+      trim: true,
+    },
     metadata: {
       type: mongoose.Schema.Types.Mixed,
       default: {},
@@ -140,6 +186,8 @@ const alertSchema = new mongoose.Schema(
 // Compound indexes for performant querying
 alertSchema.index({ status: 1, severity: 1, detectedAt: -1 });
 alertSchema.index({ cameraCode: 1, detectedAt: -1 });
+alertSchema.index({ workFront: 1, detectedAt: -1 });
+alertSchema.index({ contractor: 1, detectedAt: -1 });
 
 module.exports = mongoose.model('Alert', alertSchema);
 

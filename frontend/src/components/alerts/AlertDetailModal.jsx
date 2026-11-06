@@ -11,8 +11,47 @@ import {
   CheckCircle2,
   Image as ImageIcon,
   User,
+  HardHat,
 } from 'lucide-react';
 import evidenceService from '../../services/evidenceService';
+
+const formatActivity = (type) => {
+  const map = {
+    WORKING_AT_HEIGHT: 'Work at Height',
+    HOT_WORK: 'Hot Work',
+    EXCAVATION: 'Excavation',
+    CONFINED_SPACE: 'Confined Space',
+    HEAVY_LIFTING: 'Heavy Lifting',
+    ELECTRICAL: 'Electrical',
+    GENERAL_CONSTRUCTION: 'General Construction',
+    OTHER: 'Other',
+  };
+  return map[type] || type || 'General';
+};
+
+const formatShift = (shift) => {
+  const map = {
+    MORNING: 'Morning',
+    AFTERNOON: 'Afternoon',
+    NIGHT: 'Night',
+    GENERAL_24X7: '24×7',
+  };
+  return map[shift] || shift || 'General';
+};
+
+const getRiskBadge = (risk) => {
+  const map = {
+    CRITICAL: 'danger',
+    HIGH: 'warning',
+    MEDIUM: 'info',
+    LOW: 'success',
+  };
+  return (
+    <Badge variant={map[risk] || 'neutral'} size="sm">
+      {risk || 'UNSPECIFIED'}
+    </Badge>
+  );
+};
 
 export function AlertDetailModal({
   isOpen,
@@ -186,6 +225,104 @@ export function AlertDetailModal({
             </p>
           </div>
         </div>
+
+        {/* Operational Context & Work-Front Attribution Card */}
+        {alert.workFrontCode || alert.workFront ? (
+          <div className="p-4 rounded-xl border border-blue-200/80 bg-gradient-to-br from-blue-50/70 via-slate-50 to-indigo-50/40 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-blue-100 flex items-center justify-center text-blue-700">
+                  <HardHat className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-xs font-bold text-slate-800 tracking-wide uppercase">
+                  Work-Front & Operational Context
+                </span>
+              </div>
+              <span className="inline-flex items-center font-mono text-xs font-bold text-blue-800 bg-blue-100/80 border border-blue-300/80 px-2.5 py-0.5 rounded shadow-2xs">
+                {alert.workFrontCode || alert.workFront?.workFrontCode}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs pt-1">
+              <div>
+                <span className="text-[11px] text-slate-500 block">Work-Front Name</span>
+                <span className="font-semibold text-slate-800">
+                  {alert.workFrontName || alert.workFront?.name || '—'}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[11px] text-slate-500 block">Contractor</span>
+                <span className="font-semibold text-slate-800">
+                  {alert.contractor || alert.workFront?.contractor || '—'}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[11px] text-slate-500 block">Zone / Perimeter</span>
+                <span className="font-semibold text-slate-800">
+                  {alert.zone || alert.workFront?.zone || alert.location || '—'}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[11px] text-slate-500 block">Activity Classification</span>
+                <div className="mt-1">
+                  <Badge variant="neutral" size="sm">
+                    {formatActivity(alert.activityType || alert.workFront?.activityType)}
+                  </Badge>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[11px] text-slate-500 block">Risk Level</span>
+                <div className="mt-1">
+                  {getRiskBadge(alert.riskLevel || alert.workFront?.riskLevel)}
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[11px] text-slate-500 block">Operational Shift</span>
+                <div className="mt-1">
+                  <span className="inline-flex items-center gap-1 font-medium text-slate-700 text-xs">
+                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    {formatShift(alert.shift || alert.workFront?.shift)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Supervisor Info if present */}
+            {alert.workFront?.supervisor?.name && (
+              <div className="pt-2 border-t border-blue-200/50 flex flex-wrap items-center justify-between text-[11px] text-slate-600 gap-2">
+                <span>
+                  Site Supervisor:{' '}
+                  <strong className="text-slate-800">{alert.workFront.supervisor.name}</strong>
+                </span>
+                {alert.workFront.supervisor.phone && (
+                  <span className="font-mono text-slate-500">
+                    {alert.workFront.supervisor.phone}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="p-3.5 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-xs text-slate-500 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <HardHat className="w-4 h-4 text-slate-400 shrink-0" />
+              <div>
+                <span className="font-medium text-slate-700">No Work-Front Assigned</span>
+                <span className="text-[11px] text-slate-400 block">
+                  Camera is currently unassigned or operational context was not mapped at detection time.
+                </span>
+              </div>
+            </div>
+            <span className="text-[10px] uppercase font-mono px-2 py-0.5 bg-slate-200/70 text-slate-600 rounded">
+              Unassigned
+            </span>
+          </div>
+        )}
 
         {/* Resolution Remarks & Audit Trail if Closed */}
         {alert.status === 'CLOSED' && alert.closureRemarks && (

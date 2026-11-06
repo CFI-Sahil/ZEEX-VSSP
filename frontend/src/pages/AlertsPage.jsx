@@ -212,7 +212,7 @@ export function AlertsPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search alert code, event ID, violation or camera..."
+              placeholder="Search alert code, event ID, violation, camera, or work-front..."
               className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
               data-testid="alert-search-input"
             />
@@ -334,6 +334,7 @@ export function AlertsPage() {
                 <TableRow>
                   <TableHead>Alert Code</TableHead>
                   <TableHead>Violation Type</TableHead>
+                  <TableHead>Work-Front / Contractor</TableHead>
                   <TableHead>Camera Location</TableHead>
                   <TableHead>Severity</TableHead>
                   <TableHead>Confidence</TableHead>
@@ -359,6 +360,40 @@ export function AlertsPage() {
                         <span className="text-[11px] text-[var(--color-text-muted)] line-clamp-1">
                           {alert.description}
                         </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {alert.workFrontCode ? (
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-mono text-xs font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                              {alert.workFrontCode}
+                            </span>
+                            {alert.riskLevel && (
+                              <span
+                                className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
+                                  alert.riskLevel === 'CRITICAL'
+                                    ? 'bg-rose-100 text-rose-700'
+                                    : alert.riskLevel === 'HIGH'
+                                    ? 'bg-amber-100 text-amber-700'
+                                    : alert.riskLevel === 'MEDIUM'
+                                    ? 'bg-sky-100 text-sky-700'
+                                    : 'bg-emerald-100 text-emerald-700'
+                                }`}
+                              >
+                                {alert.riskLevel}
+                              </span>
+                            )}
+                          </div>
+                          <span
+                            className="text-[11px] text-slate-500 block truncate max-w-[150px]"
+                            title={alert.contractor || alert.workFrontName || ''}
+                          >
+                            {alert.contractor || alert.workFrontName || '—'}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 italic">Unassigned</span>
                       )}
                     </TableCell>
                     <TableCell>

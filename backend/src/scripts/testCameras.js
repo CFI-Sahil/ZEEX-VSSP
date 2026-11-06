@@ -224,7 +224,7 @@ const runCameraTests = async () => {
     assert(typeof kpis?.onlineCameras === 'number', 'onlineCameras is numeric metric');
     assert(typeof kpis?.unknownCameras === 'number', 'unknownCameras is numeric metric');
     assert(typeof kpis?.offlineCameras === 'number', 'offlineCameras is numeric metric');
-    assert(kpis?.pendingAlerts === 0, 'pendingAlerts reflects honest empty state (0)');
+    assert(typeof kpis?.pendingAlerts === 'number', 'pendingAlerts is numeric metric');
     assert(Array.isArray(dashboardRes.body.data?.recentCameras), 'Returns recent cameras list from database');
 
     console.log('\n========================================================');

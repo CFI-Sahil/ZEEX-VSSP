@@ -8,6 +8,7 @@ const { ingestDemoEventSchema } = require('../validators/alertValidator');
 const { logAudit } = require('../utils/auditLogger');
 const { validateEvidenceFileOnDisk } = require('../utils/fileValidator');
 const storageService = require('../services/storageService');
+const alertEnrichmentService = require('../services/alertEnrichmentService');
 
 const VIOLATION_NAMES = {
   NO_HELMET: 'Missing Safety Helmet',
@@ -115,8 +116,11 @@ const ingestDemoEvent = async (req, res, next) => {
       );
     }
 
-    // 1. Create Alert in PENDING status
-    const alert = new Alert({
+    // Resolve Work-Front operational context via enrichment service (Batch 3)
+    const enrichment = await alertEnrichmentService.resolveContext(camera);
+
+    // 1. Create Alert in PENDING status with operational enrichment
+    const alertData = {
       alertCode,
       eventId,
       camera: camera._id,
@@ -129,7 +133,21 @@ const ingestDemoEvent = async (req, res, next) => {
       description: description || `Automated vision detection: ${violationName} detected at ${camera.name}`,
       location: camera.location,
       detectedAt: new Date(),
-    });
+    };
+
+    // Attach backend-derived operational context if camera has an eligible Work-Front mapping
+    if (enrichment.isEnriched && enrichment.context) {
+      alertData.workFront = enrichment.context.workFront;
+      alertData.workFrontCode = enrichment.context.workFrontCode;
+      alertData.workFrontName = enrichment.context.workFrontName;
+      alertData.zone = enrichment.context.zone;
+      alertData.contractor = enrichment.context.contractor;
+      alertData.activityType = enrichment.context.activityType;
+      alertData.riskLevel = enrichment.context.riskLevel;
+      alertData.shift = enrichment.context.shift;
+    }
+
+    const alert = new Alert(alertData);
 
     // 2. Create Associated Evidence
     const evidence = new Evidence({
@@ -154,24 +172,33 @@ const ingestDemoEvent = async (req, res, next) => {
 
     await Promise.all([alert.save(), evidence.save()]);
 
-    // Requirement 6: Record operational audit events
+    // Requirement 6: Record operational audit events with enrichment context
+    const auditDetails = {
+      alertCode,
+      eventId,
+      cameraCode: camera.cameraCode,
+      violationType,
+      severity,
+      source: 'DEMO_DETECTION_INGESTION',
+      isEnriched: Boolean(enrichment.isEnriched),
+    };
+
+    if (enrichment.isEnriched && enrichment.context) {
+      auditDetails.workFrontCode = enrichment.context.workFrontCode;
+      auditDetails.contractor = enrichment.context.contractor;
+    }
+
     await logAudit({
       action: 'ALERT_CREATED',
       entityType: 'ALERT',
       entityId: alert._id,
       req,
-      details: {
-        alertCode,
-        eventId,
-        cameraCode: camera.cameraCode,
-        violationType,
-        severity,
-        source: 'DEMO_DETECTION_INGESTION',
-      },
+      details: auditDetails,
     });
 
     const populatedAlert = await Alert.findById(alert._id)
       .populate('camera', 'cameraCode name site location status')
+      .populate('workFront', 'workFrontCode name site zone contractor status')
       .populate('evidence');
 
     return sendSuccess(

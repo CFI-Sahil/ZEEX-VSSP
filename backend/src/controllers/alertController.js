@@ -44,6 +44,9 @@ const getAlerts = async (req, res, next) => {
         { violationName: regex },
         { cameraCode: regex },
         { location: regex },
+        { workFrontCode: regex },
+        { workFrontName: regex },
+        { contractor: regex },
       ];
     }
 
@@ -55,6 +58,7 @@ const getAlerts = async (req, res, next) => {
         .skip(skip)
         .limit(limit)
         .populate('camera', 'cameraCode name site location status')
+        .populate('workFront', 'workFrontCode name site zone contractor status')
         .populate('evidence', 'evidenceCode fileName fileType fileSize capturedAt')
         .populate('acknowledgedBy', 'name email role')
         .populate('closedBy', 'name email role'),
@@ -93,6 +97,7 @@ const getAlertById = async (req, res, next) => {
 
     const alert = await Alert.findOne({ _id: id, isActive: true })
       .populate('camera', 'cameraCode name site location status streamStatus lastSeenAt')
+      .populate('workFront', 'workFrontCode name site zone contractor status supervisor activityType riskLevel shift')
       .populate('evidence')
       .populate('acknowledgedBy', 'name email role')
       .populate('closedBy', 'name email role');
@@ -161,6 +166,7 @@ const acknowledgeAlert = async (req, res, next) => {
 
     const populatedAlert = await Alert.findById(alert._id)
       .populate('camera', 'cameraCode name site location status')
+      .populate('workFront', 'workFrontCode name site zone contractor status')
       .populate('evidence')
       .populate('acknowledgedBy', 'name email role');
 
@@ -236,6 +242,7 @@ const closeAlert = async (req, res, next) => {
 
     const populatedAlert = await Alert.findById(alert._id)
       .populate('camera', 'cameraCode name site location status')
+      .populate('workFront', 'workFrontCode name site zone contractor status')
       .populate('evidence')
       .populate('acknowledgedBy', 'name email role')
       .populate('closedBy', 'name email role');

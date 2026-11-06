@@ -2,7 +2,7 @@ import React from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Badge from '../common/Badge';
-import { Video, MapPin, Calendar, Clock, Activity } from 'lucide-react';
+import { Video, MapPin, Calendar, Clock, Activity, HardHat } from 'lucide-react';
 
 export function CameraDetailModal({ isOpen, onClose, camera }) {
   if (!camera) return null;
@@ -51,6 +51,33 @@ export function CameraDetailModal({ isOpen, onClose, camera }) {
             Administrative ONLINE status indicates manual registry provision, not an active video signal.
           </p>
         </div>
+
+        {/* Work-Front Mapping Context */}
+        {camera.workFront ? (
+          <div className="p-3.5 rounded-xl border border-amber-200 bg-amber-50/70 text-xs">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1.5 text-amber-900 font-bold uppercase tracking-wider text-[10px]">
+                <HardHat className="w-3.5 h-3.5 text-amber-600" />
+                <span>Mapped Work-Front</span>
+              </div>
+              <span className="font-mono font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-200 text-xs">
+                {camera.workFront.workFrontCode}
+              </span>
+            </div>
+            <p className="font-semibold text-slate-800 text-xs">{camera.workFront.name}</p>
+            <p className="text-[11px] text-slate-600 mt-0.5">
+              {camera.workFront.site} · {camera.workFront.zone} · Contractor: <span className="font-medium text-slate-800">{camera.workFront.contractor}</span>
+            </p>
+          </div>
+        ) : (
+          <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs flex items-center justify-between">
+            <div className="flex items-center gap-2 text-slate-600 font-medium">
+              <HardHat className="w-4 h-4 text-slate-400" />
+              <span>Work-Front Assignment:</span>
+            </div>
+            <span className="text-xs text-slate-400 italic">Unassigned (Available for Mapping)</span>
+          </div>
+        )}
 
         {/* Detailed Metadata Grid */}
         <div className="grid grid-cols-2 gap-4 text-xs">

@@ -148,7 +148,11 @@ const getCameras = async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const [cameras, total] = await Promise.all([
-      Camera.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Camera.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('workFront', 'workFrontCode name site zone contractor status'),
       Camera.countDocuments(filter),
     ]);
 
@@ -171,8 +175,31 @@ const getCameras = async (req, res, next) => {
 };
 
 /**
+ * @route   GET /api/v1/cameras/available
+ * @desc    Get cameras that are currently unassigned to any work-front
+ * @access  Protected (ADMIN, SAFETY_OPERATOR)
+ */
+const getAvailableCameras = async (req, res, next) => {
+  try {
+    const availableCameras = await Camera.find({
+      isActive: true,
+      $or: [{ workFront: null }, { workFront: { $exists: false } }],
+    })
+      .sort({ cameraCode: 1 })
+      .select('cameraCode name site location status streamStatus');
+
+    return sendSuccess(res, 'Available cameras retrieved successfully', {
+      cameras: availableCameras,
+      count: availableCameras.length,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * @route   GET /api/v1/cameras/:id
- * @desc    Get detailed camera record
+ * @desc    Get detailed camera record with populated work-front
  * @access  Protected (ADMIN, SAFETY_OPERATOR)
  */
 const getCameraById = async (req, res, next) => {
@@ -182,7 +209,10 @@ const getCameraById = async (req, res, next) => {
       return sendError(res, 'Invalid camera identifier format', null, 400);
     }
 
-    const camera = await Camera.findOne({ _id: id, isActive: true });
+    const camera = await Camera.findOne({ _id: id, isActive: true }).populate(
+      'workFront',
+      'workFrontCode name site zone contractor status supervisor'
+    );
     if (!camera) {
       return sendError(res, 'Camera record not found', null, 404);
     }
@@ -197,6 +227,7 @@ module.exports = {
   createCamera,
   updateCamera,
   getCameras,
+  getAvailableCameras,
   getCameraById,
 };
 

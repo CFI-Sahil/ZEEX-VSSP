@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Video, Plus, Search, Filter, RefreshCw, AlertCircle, Edit, Eye } from 'lucide-react';
+import { Video, Plus, Search, Filter, RefreshCw, AlertCircle, Edit, Eye, HardHat } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import cameraService from '../services/cameraService';
 import Card from '../components/common/Card';
@@ -264,6 +264,7 @@ export function CamerasPage() {
                   <TableHead>Camera Code</TableHead>
                   <TableHead>Camera Name</TableHead>
                   <TableHead>Site Location</TableHead>
+                  <TableHead>Work-Front</TableHead>
                   <TableHead>Admin Status</TableHead>
                   <TableHead>Stream Connectivity</TableHead>
                   <TableHead>Last Heartbeat</TableHead>
@@ -286,6 +287,23 @@ export function CamerasPage() {
                     </TableCell>
                     <TableCell className="text-xs text-[var(--color-text-muted)]">
                       {cam.site} · {cam.location}
+                    </TableCell>
+                    <TableCell>
+                      {cam.workFront ? (
+                        <div className="flex items-center gap-1.5">
+                          <HardHat className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                          <div>
+                            <span className="font-mono text-xs font-bold text-slate-800">
+                              {cam.workFront.workFrontCode}
+                            </span>
+                            <span className="text-[10px] text-slate-500 block truncate max-w-[120px]">
+                              {cam.workFront.name}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 italic">Unassigned</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       {getStatusBadge(cam.status)}

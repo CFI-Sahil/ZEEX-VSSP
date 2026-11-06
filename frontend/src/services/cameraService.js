@@ -17,6 +17,10 @@ export const cameraService = {
     return api.get(`/cameras/${id}`);
   },
 
+  getAvailableCameras: async () => {
+    return api.get('/cameras/available');
+  },
+
   createCamera: async (data) => {
     return api.post('/cameras', data);
   },

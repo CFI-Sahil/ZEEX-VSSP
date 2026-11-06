@@ -6,6 +6,7 @@ import AppShell from './components/layout/AppShell';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import CamerasPage from './pages/CamerasPage';
+import WorkFrontsPage from './pages/WorkFrontsPage';
 import AlertsPage from './pages/AlertsPage';
 import EvidencePage from './pages/EvidencePage';
 
@@ -28,6 +29,7 @@ export default function App() {
           >
             <Route index element={<DashboardPage />} />
             <Route path="cameras" element={<CamerasPage />} />
+            <Route path="work-fronts" element={<WorkFrontsPage />} />
             <Route path="alerts" element={<AlertsPage />} />
             <Route path="evidence" element={<EvidencePage />} />
           </Route>

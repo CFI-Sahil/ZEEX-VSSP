@@ -57,6 +57,12 @@ const cameraSchema = new mongoose.Schema(
       default: true,
       index: true,
     },
+    workFront: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'WorkFront',
+      default: null,
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -66,6 +72,7 @@ const cameraSchema = new mongoose.Schema(
 // Compound indexes for optimal dashboard and filter queries
 cameraSchema.index({ status: 1, isActive: 1 });
 cameraSchema.index({ site: 1, location: 1 });
+cameraSchema.index({ workFront: 1, isActive: 1 });
 
 module.exports = mongoose.model('Camera', cameraSchema);
 

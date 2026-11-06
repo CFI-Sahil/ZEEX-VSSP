@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Video,
+  HardHat,
   AlertTriangle,
   FolderArchive,
   Radio,
@@ -16,6 +17,7 @@ import logoTransparent from '../../assets/logo-transparent.png';
 const navItems = [
   { name: 'Dashboard', path: '/', icon: LayoutDashboard },
   { name: 'Cameras', path: '/cameras', icon: Video },
+  { name: 'Work Fronts', path: '/work-fronts', icon: HardHat },
   { name: 'Alerts', path: '/alerts', icon: AlertTriangle },
   { name: 'Evidence', path: '/evidence', icon: FolderArchive },
 ];

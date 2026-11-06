@@ -5,6 +5,7 @@ const cameraRoutes = require('./cameraRoutes');
 const dashboardRoutes = require('./dashboardRoutes');
 const alertRoutes = require('./alertRoutes');
 const evidenceRoutes = require('./evidenceRoutes');
+const workFrontRoutes = require('./workFrontRoutes');
 const demoRoutes = require('./demoRoutes');
 const env = require('../config/env');
 
@@ -16,8 +17,9 @@ router.use('/health', healthRoutes);
 // Mount authentication & session routes
 router.use('/auth', authRoutes);
 
-// Mount operational camera & dashboard routes
+// Mount operational camera, work-front & dashboard routes
 router.use('/cameras', cameraRoutes);
+router.use('/work-fronts', workFrontRoutes);
 router.use('/dashboard', dashboardRoutes);
 
 // Mount safety alert & evidence routes

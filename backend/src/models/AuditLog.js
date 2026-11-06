@@ -13,6 +13,12 @@ const auditLogSchema = new mongoose.Schema(
         'DEMO_EVENT_INGESTED',
         'CAMERA_CREATED',
         'CAMERA_UPDATED',
+        'WORKFRONT_CREATED',
+        'WORKFRONT_UPDATED',
+        'WORKFRONT_STATUS_CHANGED',
+        'CAMERA_ASSIGNED_TO_WORKFRONT',
+        'CAMERA_REMOVED_FROM_WORKFRONT',
+        'CAMERA_RELOCATED',
         'USER_LOGIN',
         'USER_LOGOUT',
       ],
@@ -21,7 +27,7 @@ const auditLogSchema = new mongoose.Schema(
     entityType: {
       type: String,
       required: [true, 'Entity type is required'],
-      enum: ['ALERT', 'EVIDENCE', 'CAMERA', 'USER', 'SYSTEM'],
+      enum: ['ALERT', 'EVIDENCE', 'CAMERA', 'USER', 'SYSTEM', 'WORKFRONT'],
       index: true,
     },
     entityId: {
