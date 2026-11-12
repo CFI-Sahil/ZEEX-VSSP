@@ -86,9 +86,13 @@ const disconnectDB = async () => {
   }
 };
 
+const { assertSafeForCleanup, isProtectedDatabase } = require('../utils/databaseGuard');
+
 module.exports = {
   connectDB,
   checkDatabaseHealth,
   disconnectDB,
+  assertSafeForCleanup,
+  isProtectedDatabase,
 };
 

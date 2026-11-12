@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const Alert = require('../models/Alert');
 const Evidence = require('../models/Evidence');
 const Camera = require('../models/Camera');
@@ -9,6 +10,8 @@ const { logAudit } = require('../utils/auditLogger');
 const { validateEvidenceFileOnDisk } = require('../utils/fileValidator');
 const storageService = require('../services/storageService');
 const alertEnrichmentService = require('../services/alertEnrichmentService');
+const notificationService = require('../services/notificationService');
+const notificationDispatcher = require('../services/notificationDispatcher');
 
 const VIOLATION_NAMES = {
   NO_HELMET: 'Missing Safety Helmet',
@@ -74,13 +77,15 @@ const ingestDemoEvent = async (req, res, next) => {
       );
     }
 
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const alertCode = `ALT-${randomSuffix}`;
-    const evidenceCode = `EVD-${randomSuffix}`;
+    // Step 1: Generate high-entropy collision-resistant identifiers
+    const uniqueSuffix = `${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+    const alertCode = `ALT-${uniqueSuffix}`;
+    const evidenceCode = `EVD-${uniqueSuffix}`;
+    const publicId = `${process.env.CLOUDINARY_FOLDER || 'ZEEX VSSP/Evidence'}/${evidenceCode}`;
 
     const violationName = customName || VIOLATION_NAMES[violationType] || 'Safety Violation';
 
-    // Requirement 3: File stored in private directory or Cloudinary, max 5MB, valid image signature
+    // File stored in private directory or Cloudinary, max 5MB, valid image signature
     const uploadsDir = path.resolve(__dirname, '../../uploads/evidence');
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
@@ -104,27 +109,10 @@ const ingestDemoEvent = async (req, res, next) => {
       }
     }
 
-    // Delegate persistence to storageService (handles both local disk and Cloudinary)
-    let storedEvidence;
-    try {
-      storedEvidence = await storageService.saveEvidenceSnapshot({
-        localFilePath: filePath,
-        fileName: sampleFileName,
-        evidenceCode,
-      });
-    } catch (storageErr) {
-      return sendError(
-        res,
-        `Evidence snapshot storage failed: ${storageErr.message}`,
-        null,
-        400
-      );
-    }
-
     // Resolve Work-Front operational context via enrichment service (Batch 3)
     const enrichment = await alertEnrichmentService.resolveContext(camera);
 
-    // 1. Create Alert in PENDING status with operational enrichment
+    // Step 2: Build Alert with durable evidence intent in MongoDB
     const alertData = {
       alertCode,
       eventId,
@@ -135,9 +123,20 @@ const ingestDemoEvent = async (req, res, next) => {
       severity,
       confidence: confidence || 0.92,
       status: 'PENDING',
+      escalationLevel: 1,
       description: description || `Automated vision detection: ${violationName} detected at ${camera.name}`,
       location: camera.location,
       detectedAt: new Date(),
+      evidence: null,
+      metadata: {
+        evidenceStatus: 'EVIDENCE_PENDING_UPLOAD',
+        evidenceIntent: {
+          evidenceCode,
+          publicId,
+          fileName: sampleFileName,
+          stagedAt: new Date(),
+        },
+      },
     };
 
     // Attach backend-derived operational context if camera has an eligible Work-Front mapping
@@ -152,9 +151,34 @@ const ingestDemoEvent = async (req, res, next) => {
       alertData.shift = enrichment.context.shift;
     }
 
+    // Step 3: Persist Alert FIRST in MongoDB (confirm persistence before upload)
     const alert = new Alert(alertData);
+    await alert.save();
 
-    // 2. Create Associated Evidence
+    // Step 4: Delegate upload to storageService with overwrite: false
+    let storedEvidence;
+    try {
+      storedEvidence = await storageService.saveEvidenceSnapshot({
+        localFilePath: filePath,
+        fileName: sampleFileName,
+        evidenceCode,
+      });
+    } catch (storageErr) {
+      // Alert remains safely in MongoDB with evidenceStatus = 'EVIDENCE_RECOVERY_PENDING'
+      alert.metadata.evidenceStatus = 'EVIDENCE_RECOVERY_PENDING';
+      alert.metadata.lastTransientError = storageErr.message;
+      alert.markModified('metadata');
+      await alert.save();
+
+      return sendError(
+        res,
+        `Evidence snapshot storage failed: ${storageErr.message}`,
+        null,
+        400
+      );
+    }
+
+    // Step 5: Create and persist Associated Evidence
     const evidence = new Evidence({
       evidenceCode,
       alert: alert._id,
@@ -168,16 +192,23 @@ const ingestDemoEvent = async (req, res, next) => {
       storageDriver: storedEvidence.storageDriver,
       cloudinaryPublicId: storedEvidence.cloudinaryPublicId,
       cloudinaryUrl: storedEvidence.cloudinaryUrl,
+      checksumSha256: storedEvidence.checksumSha256 || null,
+      lastIntegrityStatus: storedEvidence.checksumSha256 ? 'VERIFIED' : 'NOT_YET_VERIFIED',
+      lastVerifiedAt: storedEvidence.checksumSha256 ? new Date() : null,
       capturedAt: new Date(),
       uploadedBy: req?.user?._id || null,
       description: `Snapshot evidence for ${alertCode}`,
     });
+    await evidence.save();
 
+    // Step 6: Link Evidence and finalize Alert evidence status
     alert.evidence = evidence._id;
+    alert.metadata.evidenceStatus = 'EVIDENCE_AVAILABLE';
+    delete alert.metadata.evidenceIntent;
+    alert.markModified('metadata');
+    await alert.save();
 
-    await Promise.all([alert.save(), evidence.save()]);
-
-    // Requirement 6: Record operational audit events with enrichment context
+    // Record operational audit event
     const auditDetails = {
       alertCode,
       eventId,
@@ -200,6 +231,18 @@ const ingestDemoEvent = async (req, res, next) => {
       req,
       details: auditDetails,
     });
+
+    // Step 7: Generate and dispatch initial Level 1 notifications
+    try {
+      const notifResult = await notificationService.generateInitialAlertNotifications(alert);
+      if (notifResult.stagedNotifications && notifResult.stagedNotifications.length > 0) {
+        notificationDispatcher.dispatchBatch(notifResult.stagedNotifications).catch((err) => {
+          console.error('[DemoController] Initial notification dispatch error:', err.message);
+        });
+      }
+    } catch (notifErr) {
+      console.error('[DemoController] Failed to generate initial notifications:', notifErr.message);
+    }
 
     const populatedAlert = await Alert.findById(alert._id)
       .populate('camera', 'cameraCode name site location status')

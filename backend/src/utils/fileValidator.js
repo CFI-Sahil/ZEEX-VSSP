@@ -85,10 +85,31 @@ const validateEvidenceFileOnDisk = (filePath) => {
   };
 };
 
+/**
+ * Computes hexadecimal SHA-256 hash using Node.js built-in crypto
+ * @param {Buffer|string} input - Image buffer or local file path
+ * @returns {string|null} Uppercase SHA-256 hexadecimal digest
+ */
+const computeSha256 = (input) => {
+  const crypto = require('crypto');
+  const hash = crypto.createHash('sha256');
+  if (Buffer.isBuffer(input)) {
+    hash.update(input);
+    return hash.digest('hex').toUpperCase();
+  }
+  if (typeof input === 'string' && fs.existsSync(input)) {
+    const fileBuffer = fs.readFileSync(input);
+    hash.update(fileBuffer);
+    return hash.digest('hex').toUpperCase();
+  }
+  return null;
+};
+
 module.exports = {
   MAX_FILE_SIZE,
   ALLOWED_MIME_TYPES,
   validateFileSignature,
   validateEvidenceFileOnDisk,
+  computeSha256,
 };
 

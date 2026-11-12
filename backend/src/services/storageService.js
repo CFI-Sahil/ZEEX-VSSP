@@ -2,7 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const cloudinary = require('../config/cloudinary');
 const env = require('../config/env');
-const { validateFileSignature, validateEvidenceFileOnDisk } = require('../utils/fileValidator');
+const {
+  validateFileSignature,
+  validateEvidenceFileOnDisk,
+  computeSha256,
+} = require('../utils/fileValidator');
 
 const LOCAL_UPLOADS_DIR = path.resolve(__dirname, '../../uploads/evidence');
 const BUNDLED_ASSETS_DIR = path.resolve(__dirname, '../assets/evidence');
@@ -64,6 +68,9 @@ const saveEvidenceSnapshot = async ({
     );
   }
 
+  // Calculate cryptographic SHA-256 checksum from original validated source bytes (Batch 4)
+  const checksumSha256 = computeSha256(buffer || resolvedSourcePath);
+
   const hasCloudinaryCredentials = Boolean(
     env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET
   );
@@ -91,7 +98,7 @@ const saveEvidenceSnapshot = async ({
         folder: env.CLOUDINARY_FOLDER || 'ZEEX VSSP/Evidence',
         public_id: evidenceCode,
         resource_type: 'image',
-        overwrite: true,
+        overwrite: false,
       });
     } else if (buffer) {
       uploadResult = await new Promise((resolve, reject) => {
@@ -100,7 +107,7 @@ const saveEvidenceSnapshot = async ({
             folder: env.CLOUDINARY_FOLDER || 'ZEEX VSSP/Evidence',
             public_id: evidenceCode,
             resource_type: 'image',
-            overwrite: true,
+            overwrite: false,
           },
           (err, result) => {
             if (err) return reject(err);
@@ -119,6 +126,7 @@ const saveEvidenceSnapshot = async ({
       fileSize: uploadResult.bytes || fileValidation.fileSize,
       cloudinaryPublicId: uploadResult.public_id,
       cloudinaryUrl: uploadResult.secure_url,
+      checksumSha256,
     };
   }
 
@@ -143,6 +151,7 @@ const saveEvidenceSnapshot = async ({
     fileSize: fileValidation.fileSize,
     cloudinaryPublicId: null,
     cloudinaryUrl: null,
+    checksumSha256,
   };
 };
 
@@ -279,6 +288,7 @@ const getEvidenceAsset = async (evidence) => {
 module.exports = {
   saveEvidenceSnapshot,
   getEvidenceAsset,
+  computeSha256,
   LOCAL_UPLOADS_DIR,
   BUNDLED_ASSETS_DIR,
 };

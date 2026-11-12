@@ -95,6 +95,25 @@ const evidenceSchema = new mongoose.Schema(
       trim: true,
       maxlength: [300, 'Description cannot exceed 300 characters'],
     },
+    // Batch 4: Cryptographic forensic checksum (SHA-256)
+    checksumSha256: {
+      type: String,
+      default: null,
+      trim: true,
+      uppercase: true,
+    },
+    lastIntegrityStatus: {
+      type: String,
+      enum: {
+        values: ['VERIFIED', 'INTEGRITY_MISMATCH', 'NOT_YET_VERIFIED', 'UNABLE_TO_VERIFY'],
+        message: 'Invalid integrity status',
+      },
+      default: 'NOT_YET_VERIFIED',
+    },
+    lastVerifiedAt: {
+      type: Date,
+      default: null,
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -106,7 +125,11 @@ const evidenceSchema = new mongoose.Schema(
   }
 );
 
+// Compound indexes for performant vault querying and filtering
 evidenceSchema.index({ cameraCode: 1, capturedAt: -1 });
+evidenceSchema.index({ storageDriver: 1, capturedAt: -1 }, { name: 'evidence_driver_captured_idx' });
+evidenceSchema.index({ alertCode: 1, capturedAt: -1 }, { name: 'evidence_alert_captured_idx' });
+evidenceSchema.index({ fileSize: -1 }, { name: 'evidence_filesize_idx' });
 
 // Ensure Cloudinary URLs and internal metadata are never leaked to API consumers
 evidenceSchema.set('toJSON', {

@@ -122,6 +122,36 @@ const alertSchema = new mongoose.Schema(
       ref: 'Evidence',
       default: null,
     },
+    detectionEvent: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'DetectionEvent',
+      default: null,
+      index: true,
+    },
+    // SLA Escalation Tracking (Batch 3)
+    escalationLevel: {
+      type: Number,
+      enum: [1, 2, 3],
+      default: 1,
+      index: true,
+    },
+    escalatedAtL2: {
+      type: Date,
+      default: null,
+    },
+    escalatedAtL3: {
+      type: Date,
+      default: null,
+    },
+    escalationHistory: [
+      {
+        level: { type: Number, required: true },
+        escalatedAt: { type: Date, default: Date.now },
+        reason: { type: String, default: 'SLA threshold exceeded' },
+        previousLevel: { type: Number, default: 1 },
+        details: { type: mongoose.Schema.Types.Mixed, default: {} },
+      },
+    ],
     // Operational Work-Front & Contractor Enrichment (Batch 3)
     workFront: {
       type: mongoose.Schema.Types.ObjectId,
@@ -188,6 +218,10 @@ alertSchema.index({ status: 1, severity: 1, detectedAt: -1 });
 alertSchema.index({ cameraCode: 1, detectedAt: -1 });
 alertSchema.index({ workFront: 1, detectedAt: -1 });
 alertSchema.index({ contractor: 1, detectedAt: -1 });
+
+// Batch 3: SLA Overdue Escalation evaluation & Evidence Recovery
+alertSchema.index({ status: 1, isActive: 1, escalationLevel: 1, detectedAt: 1 });
+alertSchema.index({ evidence: 1, 'metadata.evidenceStatus': 1, isActive: 1 });
 
 module.exports = mongoose.model('Alert', alertSchema);
 

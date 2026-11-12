@@ -8,6 +8,7 @@ export const alertService = {
     if (params.search && params.search.trim()) query.append('search', params.search.trim());
     if (params.status && params.status !== 'ALL') query.append('status', params.status);
     if (params.severity && params.severity !== 'ALL') query.append('severity', params.severity);
+    if (params.escalationLevel && params.escalationLevel !== 'ALL') query.append('escalationLevel', params.escalationLevel);
     if (params.cameraCode) query.append('cameraCode', params.cameraCode);
 
     const queryString = query.toString();

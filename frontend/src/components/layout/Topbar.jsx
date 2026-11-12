@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, LogOut, MapPin, UserCheck, Shield } from 'lucide-react';
 import Badge from '../common/Badge';
+import { NotificationBell } from '../notifications/NotificationBell';
 import { useAuth } from '../../hooks/useAuth';
 
 export function Topbar({ onToggleSidebar, pageTitle = 'Dashboard' }) {
@@ -53,6 +54,9 @@ export function Topbar({ onToggleSidebar, pageTitle = 'Dashboard' }) {
             <span className="hidden xs:inline">{user.role === 'ADMIN' ? 'ADMINISTRATOR' : 'SAFETY OPERATOR'}</span>
           </Badge>
         )}
+
+        {/* Batch 3: Real-Time Notification & Escalation Bell */}
+        <NotificationBell />
 
         {/* User Profile Chip */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 pl-1.5 sm:pl-2 border-l border-slate-200">

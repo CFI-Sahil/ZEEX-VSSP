@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const Alert = require('../models/Alert');
 const AuditLog = require('../models/AuditLog');
+const NotificationLog = require('../models/NotificationLog');
+const notificationDispatcher = require('../services/notificationDispatcher');
 const { sendSuccess, sendError } = require('../utils/response');
 const { alertQuerySchema, closeAlertSchema } = require('../validators/alertValidator');
 const { logAudit } = require('../utils/auditLogger');
@@ -20,7 +22,7 @@ const getAlerts = async (req, res, next) => {
       return sendError(res, 'Invalid query parameters', parseResult.error.issues, 400);
     }
 
-    const { page, limit, search, status, severity, cameraCode } = parseResult.data;
+    const { page, limit, search, status, severity, escalationLevel, cameraCode } = parseResult.data;
     const filter = { isActive: true };
 
     if (status && status !== 'ALL') {
@@ -29,6 +31,10 @@ const getAlerts = async (req, res, next) => {
 
     if (severity && severity !== 'ALL') {
       filter.severity = severity;
+    }
+
+    if (escalationLevel) {
+      filter.escalationLevel = escalationLevel;
     }
 
     if (cameraCode && cameraCode.trim()) {
@@ -112,7 +118,13 @@ const getAlertById = async (req, res, next) => {
       entityId: String(alert._id),
     }).sort({ timestamp: -1 });
 
-    return sendSuccess(res, 'Alert details retrieved successfully', { alert, auditLogs });
+    // Retrieve associated notification logs (Batch 3)
+    const notifications = await NotificationLog.find({
+      alert: alert._id,
+      isActive: true,
+    }).sort({ createdAt: -1 });
+
+    return sendSuccess(res, 'Alert details retrieved successfully', { alert, auditLogs, notifications });
   } catch (error) {
     next(error);
   }
@@ -150,6 +162,9 @@ const acknowledgeAlert = async (req, res, next) => {
     alert.acknowledgedAt = new Date();
 
     await alert.save();
+
+    // Cancel pending/retrying external notifications for acknowledged alert
+    await notificationDispatcher.cancelPendingAlertNotifications(alert._id);
 
     // Record audit event
     await logAudit({
@@ -225,6 +240,9 @@ const closeAlert = async (req, res, next) => {
     alert.closureRemarks = remarks;
 
     await alert.save();
+
+    // Cancel pending/retrying external notifications for closed alert
+    await notificationDispatcher.cancelPendingAlertNotifications(alert._id);
 
     // Record audit event
     await logAudit({

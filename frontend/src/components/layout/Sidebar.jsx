@@ -6,9 +6,18 @@ import {
   HardHat,
   AlertTriangle,
   FolderArchive,
+  Activity,
   Radio,
   X,
   LogOut,
+  GraduationCap,
+  BookOpen,
+  Clock,
+  SlidersHorizontal,
+  ClipboardList,
+  Send,
+  Inbox,
+  History as HistoryIcon,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useAuth } from '../../hooks/useAuth';
@@ -20,6 +29,7 @@ const navItems = [
   { name: 'Work Fronts', path: '/work-fronts', icon: HardHat },
   { name: 'Alerts', path: '/alerts', icon: AlertTriangle },
   { name: 'Evidence', path: '/evidence', icon: FolderArchive },
+  { name: 'Event Intake', path: '/event-intake', icon: Activity },
 ];
 
 export function Sidebar({ isOpen, onClose }) {
@@ -115,6 +125,212 @@ export function Sidebar({ isOpen, onClose }) {
               </NavLink>
             );
           })}
+          <div className="pt-4 px-3 pb-2 text-[10px] font-semibold text-amber-400 uppercase tracking-wider flex items-center justify-between">
+            <span>Training Sandbox</span>
+            <span className="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono">SIM</span>
+          </div>
+          <NavLink
+            to="/training"
+            end
+            onClick={onClose}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group select-none',
+                isActive
+                  ? 'bg-[#183653] text-white shadow-xs border-l-2 border-amber-400 font-semibold'
+                  : 'text-slate-300 hover:bg-[#183653]/60 hover:text-white'
+              )
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <GraduationCap
+                  className={cn(
+                    'w-4 h-4 shrink-0 transition-colors',
+                    isActive ? 'text-amber-400' : 'text-slate-400 group-hover:text-slate-200'
+                  )}
+                />
+                <span>Overview</span>
+              </>
+            )}
+          </NavLink>
+          <NavLink
+            to="/training/scenarios"
+            onClick={onClose}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group select-none',
+                isActive
+                  ? 'bg-[#183653] text-white shadow-xs border-l-2 border-amber-400 font-semibold'
+                  : 'text-slate-300 hover:bg-[#183653]/60 hover:text-white'
+              )
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <BookOpen
+                  className={cn(
+                    'w-4 h-4 shrink-0 transition-colors',
+                    isActive ? 'text-amber-400' : 'text-slate-400 group-hover:text-slate-200'
+                  )}
+                />
+                <span>Scenarios</span>
+              </>
+            )}
+          </NavLink>
+          <NavLink
+            to="/training/history"
+            onClick={onClose}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group select-none',
+                isActive
+                  ? 'bg-[#183653] text-white shadow-xs border-l-2 border-amber-400 font-semibold'
+                  : 'text-slate-300 hover:bg-[#183653]/60 hover:text-white'
+              )
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <Clock
+                  className={cn(
+                    'w-4 h-4 shrink-0 transition-colors',
+                    isActive ? 'text-amber-400' : 'text-slate-400 group-hover:text-slate-200'
+                  )}
+                />
+                <span>History</span>
+              </>
+            )}
+          </NavLink>
+          {user?.role === 'ADMIN' && (
+            <NavLink
+              to="/training/admin/scenarios"
+              onClick={onClose}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group select-none',
+                  isActive
+                    ? 'bg-[#183653] text-white shadow-xs border-l-2 border-purple-400 font-semibold'
+                    : 'text-slate-300 hover:bg-[#183653]/60 hover:text-white'
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <SlidersHorizontal
+                    className={cn(
+                      'w-4 h-4 shrink-0 transition-colors',
+                      isActive ? 'text-purple-400' : 'text-slate-400 group-hover:text-slate-200'
+                    )}
+                  />
+                  <span>Scenario Admin</span>
+                </>
+              )}
+            </NavLink>
+          )}
+
+          {/* Shift Handover Section (Phase 3 Batch 6) */}
+          <div className="pt-4 px-3 pb-2 text-[10px] font-semibold text-sky-400 uppercase tracking-wider flex items-center justify-between">
+            <span>Shift Handover</span>
+            <span className="text-[9px] px-1 py-0.2 rounded bg-sky-500/20 text-sky-300 font-mono">OPS</span>
+          </div>
+          <NavLink
+            to="/handovers"
+            end
+            onClick={onClose}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group select-none',
+                isActive
+                  ? 'bg-[#183653] text-white shadow-xs border-l-2 border-sky-400 font-semibold'
+                  : 'text-slate-300 hover:bg-[#183653]/60 hover:text-white'
+              )
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <ClipboardList
+                  className={cn(
+                    'w-4 h-4 shrink-0 transition-colors',
+                    isActive ? 'text-sky-400' : 'text-slate-400 group-hover:text-slate-200'
+                  )}
+                />
+                <span>Overview</span>
+              </>
+            )}
+          </NavLink>
+          <NavLink
+            to="/handovers/create"
+            onClick={onClose}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group select-none',
+                isActive
+                  ? 'bg-[#183653] text-white shadow-xs border-l-2 border-sky-400 font-semibold'
+                  : 'text-slate-300 hover:bg-[#183653]/60 hover:text-white'
+              )
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <Send
+                  className={cn(
+                    'w-4 h-4 shrink-0 transition-colors',
+                    isActive ? 'text-sky-400' : 'text-slate-400 group-hover:text-slate-200'
+                  )}
+                />
+                <span>Create Handover</span>
+              </>
+            )}
+          </NavLink>
+          <NavLink
+            to="/handovers/inbox"
+            onClick={onClose}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group select-none',
+                isActive
+                  ? 'bg-[#183653] text-white shadow-xs border-l-2 border-sky-400 font-semibold'
+                  : 'text-slate-300 hover:bg-[#183653]/60 hover:text-white'
+              )
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <Inbox
+                  className={cn(
+                    'w-4 h-4 shrink-0 transition-colors',
+                    isActive ? 'text-sky-400' : 'text-slate-400 group-hover:text-slate-200'
+                  )}
+                />
+                <span>Incoming Inbox</span>
+              </>
+            )}
+          </NavLink>
+          <NavLink
+            to="/handovers/history"
+            onClick={onClose}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group select-none',
+                isActive
+                  ? 'bg-[#183653] text-white shadow-xs border-l-2 border-sky-400 font-semibold'
+                  : 'text-slate-300 hover:bg-[#183653]/60 hover:text-white'
+              )
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <HistoryIcon
+                  className={cn(
+                    'w-4 h-4 shrink-0 transition-colors',
+                    isActive ? 'text-sky-400' : 'text-slate-400 group-hover:text-slate-200'
+                  )}
+                />
+                <span>History & Archive</span>
+              </>
+            )}
+          </NavLink>
         </nav>
 
         {/* System Health Status & User Logout Footer */}

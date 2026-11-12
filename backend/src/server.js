@@ -14,6 +14,18 @@ const startServer = async () => {
   // Attempt database connection
   await connectDB();
 
+  // Initialize Escalation & Notification background scheduler (Batch 3)
+  const escalationScheduler = require('./services/escalationScheduler');
+  escalationScheduler.start().catch((err) => {
+    console.error('[Scheduler] Failed to start escalation scheduler:', err);
+  });
+
+  // Initialize Training Sandbox default scenarios (Batch 5)
+  const { seedDefaultScenarios } = require('./services/trainingService');
+  seedDefaultScenarios().catch((err) => {
+    console.error('[Training] Failed to seed default scenarios:', err);
+  });
+
   server = app.listen(env.PORT, () => {
     console.log(`[HTTP] Server listening on http://localhost:${env.PORT}`);
     console.log(`[HTTP] Health check: http://localhost:${env.PORT}/api/v1/health`);
@@ -28,6 +40,10 @@ const startServer = async () => {
 const handleShutdown = async (signal) => {
   console.log(`\n[Server] Received ${signal}. Starting graceful shutdown...`);
   stopKeepAlive();
+  try {
+    const escalationScheduler = require('./services/escalationScheduler');
+    escalationScheduler.stop();
+  } catch (_) {}
 
   if (server) {
     server.close(async () => {

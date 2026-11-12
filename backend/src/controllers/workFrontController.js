@@ -12,6 +12,7 @@ const {
   relocateCameraSchema,
 } = require('../validators/workFrontValidator');
 const { logAudit } = require('../utils/auditLogger');
+const { maskEmail, maskPhone } = require('../services/notificationService');
 
 // Helper to escape regex special characters
 const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -123,11 +124,23 @@ const getWorkFronts = async (req, res, next) => {
           assignedCamerasCount: 0,
         };
 
+    const sanitizedWorkFronts = workFronts.map((wf) => {
+      const doc = wf.toObject ? wf.toObject() : { ...wf };
+      if (doc.supervisor) {
+        doc.supervisor = {
+          ...doc.supervisor,
+          phone: maskPhone(doc.supervisor.phone),
+          email: maskEmail(doc.supervisor.email),
+        };
+      }
+      return doc;
+    });
+
     return sendSuccess(
       res,
       'Work-fronts retrieved successfully',
       {
-        workFronts,
+        workFronts: sanitizedWorkFronts,
         kpis: summaryKPIs,
       },
       {

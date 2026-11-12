@@ -6,6 +6,7 @@ const alertQuerySchema = z.object({
   search: z.string().trim().optional(),
   status: z.enum(['ALL', 'PENDING', 'ACKNOWLEDGED', 'CLOSED']).optional().default('ALL'),
   severity: z.enum(['ALL', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional().default('ALL'),
+  escalationLevel: z.coerce.number().int().min(1).max(3).optional(),
   cameraCode: z.string().trim().optional(),
 });
 

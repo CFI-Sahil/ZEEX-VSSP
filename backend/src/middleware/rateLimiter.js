@@ -17,7 +17,23 @@ const authRateLimiter = rateLimit({
   },
 });
 
+/**
+ * Event Intake Rate Limiter
+ * Mitigates event flooding and DoS against ingestion endpoints.
+ */
+const eventIntakeRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute window
+  max: env.NODE_ENV === 'production' ? 60 : 500,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Event intake rate limit exceeded. Please throttle ingestion requests.',
+  },
+});
+
 module.exports = {
   authRateLimiter,
+  eventIntakeRateLimiter,
 };
 

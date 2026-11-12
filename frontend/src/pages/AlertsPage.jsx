@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   AlertTriangle,
   Filter,
@@ -41,11 +42,17 @@ export function AlertsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Search parameters from URL navigation
+  const [searchParams] = useSearchParams();
+  const initialSearch = searchParams.get('search') || '';
+  const initialAlertId = searchParams.get('alertId') || '';
+
   // Filters
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [severityFilter, setSeverityFilter] = useState('ALL');
+  const [escalationFilter, setEscalationFilter] = useState('ALL');
 
   // Modals
   const [inspectAlert, setInspectAlert] = useState(null);
@@ -82,6 +89,7 @@ export function AlertsPage() {
           search: debouncedSearch,
           status: statusFilter,
           severity: severityFilter,
+          escalationLevel: escalationFilter,
         });
 
         if (response?.data?.alerts) {
@@ -98,12 +106,32 @@ export function AlertsPage() {
         setIsLoading(false);
       }
     },
-    [pagination.limit, debouncedSearch, statusFilter, severityFilter]
+    [pagination.limit, debouncedSearch, statusFilter, severityFilter, escalationFilter]
   );
 
   useEffect(() => {
     fetchAlerts(pagination.page);
   }, [fetchAlerts, pagination.page]);
+
+  // Auto-open matching alert modal when navigated via query param
+  useEffect(() => {
+    if (initialAlertId && !inspectAlert) {
+      alertService
+        .getAlertById(initialAlertId)
+        .then((res) => {
+          if (res?.data?.alert) setInspectAlert(res.data.alert);
+        })
+        .catch(() => {});
+    } else if (initialSearch && alerts.length > 0 && !inspectAlert) {
+      const queryUpper = initialSearch.trim().toUpperCase();
+      const match = alerts.find(
+        (a) => a.alertCode === queryUpper || a.eventId === queryUpper
+      );
+      if (match) {
+        setInspectAlert(match);
+      }
+    }
+  }, [initialAlertId, initialSearch, alerts, inspectAlert]);
 
   // Action handlers
   const handleAcknowledge = async (alertId) => {
@@ -170,6 +198,30 @@ export function AlertsPage() {
       case 'PENDING':
       default:
         return <Badge variant="warning" dot>PENDING</Badge>;
+    }
+  };
+
+  const getEscalationBadge = (level) => {
+    switch (level) {
+      case 3:
+        return (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
+            L3 Critical
+          </span>
+        );
+      case 2:
+        return (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+            L2 Supervisor
+          </span>
+        );
+      case 1:
+      default:
+        return (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+            L1 Normal
+          </span>
+        );
     }
   };
 
@@ -259,6 +311,25 @@ export function AlertsPage() {
               </select>
             </div>
 
+            {/* Escalation Filter (Batch 3) */}
+            <div className="flex items-center gap-1.5 text-xs text-slate-600">
+              <span className="font-medium hidden sm:inline">Escalation:</span>
+              <select
+                value={escalationFilter}
+                onChange={(e) => {
+                  setEscalationFilter(e.target.value);
+                  setPagination((p) => ({ ...p, page: 1 }));
+                }}
+                className="px-2.5 py-1.5 text-xs bg-slate-50 border border-[var(--color-border)] rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                data-testid="escalation-filter-select"
+              >
+                <option value="ALL">All Levels</option>
+                <option value="1">L1 Normal</option>
+                <option value="2">L2 Supervisor</option>
+                <option value="3">L3 Critical</option>
+              </select>
+            </div>
+
             <Button
               variant="secondary"
               size="sm"
@@ -340,12 +411,17 @@ export function AlertsPage() {
                       <span className="font-mono text-xs font-bold text-[var(--color-primary)]">
                         {alert.alertCode}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-mono">
+                      <a
+                        href={`/event-intake?search=${alert.eventId}`}
+                        className="text-[10px] text-blue-600 hover:underline font-mono"
+                        title="Trace back to originating intake event"
+                      >
                         {alert.eventId}
-                      </span>
+                      </a>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       {getStatusBadge(alert.status)}
+                      {getEscalationBadge(alert.escalationLevel)}
                       <span className="text-[11px] text-slate-400">
                         {alert.detectedAt ? new Date(alert.detectedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                       </span>
@@ -448,6 +524,7 @@ export function AlertsPage() {
                     <TableHead>Severity</TableHead>
                     <TableHead>Confidence</TableHead>
                     <TableHead>Lifecycle Status</TableHead>
+                    <TableHead>Escalation</TableHead>
                     <TableHead>Detected Time</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -457,9 +534,13 @@ export function AlertsPage() {
                     <TableRow key={alert._id} data-testid={`alert-row-${alert.alertCode}`}>
                       <TableCell className="font-mono text-xs font-semibold text-[var(--color-primary)]">
                         {alert.alertCode}
-                        <span className="block text-[10px] text-slate-400 font-normal">
+                        <a
+                          href={`/event-intake?search=${alert.eventId}`}
+                          className="block text-[10px] text-blue-600 hover:underline font-normal font-mono"
+                          title="Trace back to originating intake event"
+                        >
                           {alert.eventId}
-                        </span>
+                        </a>
                       </TableCell>
                       <TableCell>
                         <span className="font-semibold text-slate-900 block">
@@ -516,6 +597,7 @@ export function AlertsPage() {
                         {(alert.confidence * 100).toFixed(1)}%
                       </TableCell>
                       <TableCell>{getStatusBadge(alert.status)}</TableCell>
+                      <TableCell>{getEscalationBadge(alert.escalationLevel)}</TableCell>
                       <TableCell className="text-xs text-[var(--color-text-muted)]">
                         {alert.detectedAt ? new Date(alert.detectedAt).toLocaleTimeString() : 'N/A'}
                       </TableCell>
