@@ -237,18 +237,18 @@ export default function CreateHandoverPage() {
         <div>
           <button
             onClick={() => navigate('/handovers')}
-            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors mb-2 cursor-pointer"
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors mb-2 cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Handover Overview</span>
           </button>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
-            <FileText className="w-6 h-6 text-sky-400" />
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
+            <FileText className="w-6 h-6 text-sky-600" />
             <span>Initiate Shift Handover</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Author: <span className="text-slate-200 font-semibold">{user?.fullName || user?.username}</span> | Role:{' '}
-            <span className="text-sky-300 font-medium">{user?.role}</span>
+          <p className="text-xs text-slate-500 mt-1">
+            Author: <span className="text-slate-800 font-semibold">{user?.fullName || user?.username}</span> | Role:{' '}
+            <span className="text-sky-700 font-semibold">{user?.role}</span>
           </p>
         </div>
 
@@ -257,16 +257,16 @@ export default function CreateHandoverPage() {
             type="button"
             onClick={handleSaveDraft}
             disabled={savingDraft || submitting}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 shadow-xs transition-all cursor-pointer disabled:opacity-50"
           >
-            <Save className="w-4 h-4 text-slate-300" />
+            <Save className="w-4 h-4 text-slate-500" />
             <span>{savingDraft ? 'Saving...' : 'Save Draft'}</span>
           </button>
           <button
             type="button"
             onClick={() => setShowConfirmModal(true)}
             disabled={submitting || savingDraft}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-sky-600 hover:bg-sky-500 shadow-md shadow-sky-900/40 transition-all cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-sky-600 hover:bg-sky-500 shadow-md shadow-sky-900/20 transition-all cursor-pointer disabled:opacity-50"
           >
             <Send className="w-4 h-4" />
             <span>Submit Handover</span>
@@ -276,14 +276,14 @@ export default function CreateHandoverPage() {
 
       {/* Notifications */}
       {error && (
-        <div className="p-3.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
+        <div className="p-3.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
           <span>{error}</span>
         </div>
       )}
       {successMessage && (
-        <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+        <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
           <span>{successMessage}</span>
         </div>
       )}

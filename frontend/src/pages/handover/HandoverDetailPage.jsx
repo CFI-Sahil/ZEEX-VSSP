@@ -238,13 +238,13 @@ export default function HandoverDetailPage() {
         <div>
           <button
             onClick={() => navigate('/handovers')}
-            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors mb-2 cursor-pointer"
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors mb-2 cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Handover Overview</span>
           </button>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
               <span className="font-mono">{handover.handoverCode}</span>
             </h1>
             <span
@@ -255,18 +255,18 @@ export default function HandoverDetailPage() {
               {handover.status}
             </span>
             {isSnapshotFrozen && (
-              <span className="flex items-center gap-1 text-[11px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 font-medium">
+              <span className="flex items-center gap-1 text-[11px] text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 font-medium">
                 <Lock className="w-3 h-3" />
                 <span>Frozen Snapshot</span>
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             {handover.shiftLabel} | Shift Date:{' '}
-            <span className="text-slate-300 font-medium">
+            <span className="text-slate-700 font-medium">
               {new Date(handover.shiftDate).toLocaleDateString()}
             </span>{' '}
-            | Shift Type: <span className="text-slate-300 font-medium">{handover.shiftType}</span>
+            | Shift Type: <span className="text-slate-700 font-medium">{handover.shiftType}</span>
           </p>
         </div>
 
@@ -277,7 +277,7 @@ export default function HandoverDetailPage() {
               {handover.followUps?.some(
                 (f) => f.status === 'OPEN' || f.status === 'IN_PROGRESS' || f.status === 'BLOCKED'
               ) && user?.role !== 'ADMIN' ? (
-                <span className="text-[11px] text-amber-300 bg-amber-950/40 px-3 py-1.5 rounded-lg border border-amber-800/50">
+                <span className="text-[11px] text-amber-800 bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-300">
                   Resolve all follow-up action items before completing
                 </span>
               ) : (
@@ -298,14 +298,14 @@ export default function HandoverDetailPage() {
 
       {/* Notifications */}
       {error && (
-        <div className="p-3.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
+        <div className="p-3.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
           <span>{error}</span>
         </div>
       )}
       {successMessage && (
-        <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+        <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
           <span>{successMessage}</span>
         </div>
       )}
